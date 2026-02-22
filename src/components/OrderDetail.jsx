@@ -54,12 +54,7 @@ export default function OrderDetail({ order, onAcceptSent, acceptResponse, onSta
       const signer = await provider.getSigner()
       const signature = await signAcceptRequest(signer, order.id, address)
 
-      // Import useOrderbook to send accept request
-      // We communicate via the parent (OrderbookView) by calling onAcceptSent
-      // The parent accesses the orderbook hook and calls requestAccept
-      const { useOrderbook } = await import('../hooks/useOrderbook')
-
-      // Since we can't call hooks here, we dispatch via a custom event
+      // Dispatch accept request via custom event (App.jsx listens and calls orderbook.requestAccept)
       window.dispatchEvent(new CustomEvent('miniswap:accept-req', {
         detail: {
           orderId: order.id,
