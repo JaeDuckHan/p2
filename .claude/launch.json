@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5173"],
+      "port": 5173
+    },
+    {
+      "name": "hardhat-node",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/start-hardhat.js"],
+      "port": 8545
+    }
+    ,{
+      "name": "compile-check",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/compile-check.js"],
+      "port": 9999
+    }
+    ,{
+      "name": "run-tests",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/run-tests.js"],
+      "port": 9998
+    }
+    ,{
+      "name": "git-push",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-push.js"],
+      "port": 9997
+    }
+  ]
+}

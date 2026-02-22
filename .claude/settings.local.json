@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm:*)",
+      "Bash(node:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(D:/node/node.exe node_modules/hardhat/internal/cli/bootstrap.js compile:*)"
+    ]
+  }
+}
