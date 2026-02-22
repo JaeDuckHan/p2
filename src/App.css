@@ -341,3 +341,154 @@ body {
   font-size: 0.85rem;
   margin: 0.25rem 0;
 }
+
+/* ── Page tabs (오더북 | 직접거래) ──────────────────────────────────────── */
+.page-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.page-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.page-tab:hover { color: var(--text); }
+.page-tab.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+
+/* ── Orderbook tabs (매도 | 매수) ───────────────────────────────────────── */
+.ob-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.ob-tab {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.ob-tab:hover { border-color: var(--border2); color: var(--text); }
+.ob-tab.active {
+  background: var(--surface2);
+  border-color: var(--green);
+  color: var(--green);
+}
+.ob-tab-count {
+  background: var(--green);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+/* ── Orderbook list ─────────────────────────────────────────────────────── */
+.ob-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ob-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ob-item:hover { border-color: var(--border2); background: var(--surface2); }
+.ob-item.own { border-left: 3px solid var(--green); }
+
+.ob-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+.ob-item-amount {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.ob-item-expiry {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.ob-item-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+.ob-item-price {
+  font-size: 0.9rem;
+  color: var(--green);
+  font-weight: 600;
+}
+.ob-item-total {
+  font-size: 0.82rem;
+}
+.ob-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ── Buyer selector ─────────────────────────────────────────────────────── */
+.buyer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.buyer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+}
+.buyer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.buyer-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* ── Select input styling ───────────────────────────────────────────────── */
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em;
+  padding-right: 2.5rem;
+}
