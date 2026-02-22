@@ -31,5 +31,17 @@
       "runtimeArgs": ["scripts/git-push.js"],
       "port": 9997
     }
+    ,{
+      "name": "git-status",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-status-check.js"],
+      "port": 9996
+    }
+    ,{
+      "name": "git-followup",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-followup.js"],
+      "port": 9995
+    }
   ]
 }
