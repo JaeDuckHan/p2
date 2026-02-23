@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount, useSwitchChain } from 'wagmi'
 import { useGetTrade, getEscrowAddress, formatUsdt } from '../hooks/useEscrow'
 import { TradeStatus, STATUS_LABEL, STATUS_CLASS } from '../constants'
 
 export default function JoinTrade({ onJoined }) {
   const { address, chainId } = useAccount()
+  const { switchChain } = useSwitchChain()
   const [input, setInput] = useState('')
 
   // Normalise tradeId: ensure 0x prefix and 64 hex chars
@@ -32,8 +33,11 @@ export default function JoinTrade({ onJoined }) {
   if (!escrowAddr) {
     return (
       <div className="no-contract">
-        <h2>컨트랙트 미배포</h2>
-        <p>먼저 <code>npm run deploy:local</code> 을 실행하세요.</p>
+        <h2>네트워크 전환 필요</h2>
+        <p>이 앱은 <strong>Arbitrum Sepolia</strong> 테스트넷에서 동작합니다.</p>
+        <button className="btn" onClick={() => switchChain({ chainId: 421614 })}>
+          Arbitrum Sepolia로 전환
+        </button>
       </div>
     )
   }

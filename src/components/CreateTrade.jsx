@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount, useSwitchChain } from 'wagmi'
 import { isAddress } from 'viem'
 import {
   useCalcTotal,
@@ -14,6 +14,7 @@ import {
 
 export default function CreateTrade({ onCreated }) {
   const { address, chainId } = useAccount()
+  const { switchChain } = useSwitchChain()
 
   const [buyer,  setBuyer]  = useState('')
   const [amount, setAmount] = useState('')
@@ -73,10 +74,11 @@ export default function CreateTrade({ onCreated }) {
   if (!escrowAddr) {
     return (
       <div className="no-contract">
-        <h2>컨트랙트 미배포</h2>
-        <p style={{ marginBottom: '0.5rem' }}>로컬 하드햇 노드를 시작한 뒤 배포를 실행하세요:</p>
-        <code>npm run node</code><br/>
-        <code>npm run deploy:local</code>
+        <h2>네트워크 전환 필요</h2>
+        <p>이 앱은 <strong>Arbitrum Sepolia</strong> 테스트넷에서 동작합니다.</p>
+        <button className="btn" onClick={() => switchChain({ chainId: 421614 })}>
+          Arbitrum Sepolia로 전환
+        </button>
       </div>
     )
   }
