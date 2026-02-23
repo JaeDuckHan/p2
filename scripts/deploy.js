@@ -50,7 +50,7 @@ async function main() {
     console.log('\n[1/3] Using Arbitrum One USDT:', usdtAddress)
 
   } else if (network === 'arbitrumSepolia') {
-    usdtAddress = '0x3f14920C99BEB920Afa163031c4e47a3e03B3e4A'
+    usdtAddress = '0x3f14920c99BEB920Afa163031c4e47a3e03B3e4A'
     console.log('\n[1/3] Using Arbitrum Sepolia USDT:', usdtAddress)
 
   } else {
