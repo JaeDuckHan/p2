@@ -6,11 +6,11 @@ import { DEPLOYMENTS } from '../deployments'
 // ─── Address helpers ───────────────────────────────────────────────────────────
 
 export function getEscrowAddress(chainId) {
-  return DEPLOYMENTS[chainId]?.escrow ?? null
+  return DEPLOYMENTS[chainId]?.escrow ?? DEPLOYMENTS[String(chainId)]?.escrow ?? null
 }
 
 export function getUsdtAddress(chainId) {
-  return DEPLOYMENTS[chainId]?.usdt ?? USDT_ADDRESSES[chainId] ?? null
+  return DEPLOYMENTS[chainId]?.usdt ?? DEPLOYMENTS[String(chainId)]?.usdt ?? USDT_ADDRESSES[chainId] ?? null
 }
 
 // ─── Format helpers ────────────────────────────────────────────────────────────
