@@ -2,17 +2,12 @@ import { useState } from 'react'
 import { useAccount, useWalletClient } from 'wagmi'
 import { BrowserProvider } from 'ethers'
 import { signAcceptRequest } from '../lib/signature'
+import { getAvatarGradient, getAvatarChar } from './OrderbookView'
 
 /**
  * OrderDetail — Shows order info with accept button for buyers.
- *
- * @param {Object} props
- * @param {import('../types/order').Order} props.order
- * @param {function(): void} props.onAcceptSent - Called after buyer sends accept request
- * @param {import('../types/order').AcceptResponse|undefined} props.acceptResponse
- * @param {function(string, string, Object): void} props.onStartTrade
  */
-export default function OrderDetail({ order, onAcceptSent, acceptResponse, onStartTrade }) {
+export default function OrderDetail({ order, onAcceptSent, onCancel, acceptResponse, tradeNotification, onStartTrade }) {
   const { address } = useAccount()
   const { data: walletClient } = useWalletClient()
 
@@ -23,7 +18,8 @@ export default function OrderDetail({ order, onAcceptSent, acceptResponse, onSta
   if (!order) return null
 
   const isSellOrder = order.type === 'SELL'
-  const isOwn = (isSellOrder ? order.seller : order.buyer)?.toLowerCase() === address?.toLowerCase()
+  const ownerAddr = isSellOrder ? order.seller : order.buyer
+  const isOwn = ownerAddr?.toLowerCase() === address?.toLowerCase()
   const totalKRW = Math.round(order.amount * order.priceKRW)
 
   function formatExpiry(expiry) {
@@ -40,6 +36,10 @@ export default function OrderDetail({ order, onAcceptSent, acceptResponse, onSta
     return `${addr.slice(0, 6)}…${addr.slice(-4)}`
   }
 
+  function formatKRW(n) {
+    return new Intl.NumberFormat('ko-KR').format(n)
+  }
+
   async function handleAccept() {
     if (!walletClient) {
       setError('지갑이 연결되어 있지 않습니다')
@@ -54,7 +54,6 @@ export default function OrderDetail({ order, onAcceptSent, acceptResponse, onSta
       const signer = await provider.getSigner()
       const signature = await signAcceptRequest(signer, order.id, address)
 
-      // Dispatch accept request via custom event (App.jsx listens and calls orderbook.requestAccept)
       window.dispatchEvent(new CustomEvent('miniswap:accept-req', {
         detail: {
           orderId: order.id,
@@ -81,37 +80,47 @@ export default function OrderDetail({ order, onAcceptSent, acceptResponse, onSta
 
   if (acceptResponse) {
     if (acceptResponse.accepted) {
+      const tradeId = tradeNotification?.tradeId
       return (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <div className="card-title">수락 완료</div>
-          <div className="alert alert-success">
-            판매자가 수락했습니다! 에스크로 거래가 시작됩니다.
+        <div className="pad fade-in">
+          <div className="banner banner-green">
+            <span className="banner-icon">✓</span>
+            <div className="banner-body">
+              <div className="banner-title">수락 완료</div>
+              <div className="banner-text">
+                {tradeId ? '거래방에 입장하세요.' : '에스크로 생성을 기다리는 중...'}
+              </div>
+            </div>
           </div>
           {acceptResponse.bankAccount && (
-            <div style={{ marginTop: '1rem' }}>
-              <div className="label">입금 계좌</div>
+            <div className="card">
+              <div className="card-title">입금 계좌</div>
               <div className="trade-id-box">{acceptResponse.bankAccount}</div>
             </div>
           )}
-          <button
-            className="btn btn-green btn-block btn-lg"
-            style={{ marginTop: '1rem' }}
-            onClick={() => {
-              if (onStartTrade) {
-                onStartTrade(null, 'buyer', { orderId: order.id })
-              }
-            }}
-          >
-            거래방 입장
-          </button>
+          {tradeId ? (
+            <button
+              className="btn btn-teal"
+              onClick={() => onStartTrade && onStartTrade(tradeId, 'buyer')}
+            >
+              거래방 입장
+            </button>
+          ) : (
+            <div className="muted sm" style={{ textAlign: 'center', padding: '1rem' }}>
+              판매자가 USDT를 에스크로에 예치하면 자동으로 거래방에 입장합니다...
+            </div>
+          )}
         </div>
       )
     } else {
       return (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <div className="card-title">수락 거절</div>
-          <div className="alert alert-warning">
-            판매자가 다른 구매자를 선택했습니다. 다른 주문을 찾아보세요.
+        <div className="pad fade-in">
+          <div className="banner banner-amber">
+            <span className="banner-icon">😔</span>
+            <div className="banner-body">
+              <div className="banner-title">수락 거절</div>
+              <div className="banner-text">판매자가 다른 구매자를 선택했습니다. 다른 주문을 찾아보세요.</div>
+            </div>
           </div>
         </div>
       )
@@ -121,74 +130,119 @@ export default function OrderDetail({ order, onAcceptSent, acceptResponse, onSta
   // ── Order detail view ───────────────────────────────────────────────────
 
   return (
-    <div className="card" style={{ marginTop: '1rem' }}>
-      <div className="card-title">
-        {isSellOrder ? '매도 주문 상세' : '매수 주문 상세'}
+    <div className="pad fade-in">
+      {/* Amount hero */}
+      <div style={{ padding: '6px 0 14px', textAlign: 'center' }}>
+        <span className={`badge ${isSellOrder ? 'badge-blue' : 'badge-orange'}`} style={{ marginBottom: 8, display: 'inline-flex' }}>
+          {isSellOrder ? '📥 구매 플로우 A' : '🤝 판매 플로우 B'}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4, marginTop: 6 }}>
+          <span style={{ fontSize: 42, fontWeight: 900, letterSpacing: -2, color: isSellOrder ? 'var(--blue)' : 'var(--orange)' }}>
+            {order.amount.toLocaleString()}
+          </span>
+          <span style={{ fontSize: 20, color: 'var(--snow3)' }}>USDT</span>
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--snow3)', marginTop: 5 }}>
+          {formatKRW(totalKRW)}원
+        </div>
       </div>
 
-      <div className="info-grid">
-        <div className="info-item">
-          <div className="label">수량</div>
-          <div className="info-value big">{order.amount.toLocaleString()} USDT</div>
-        </div>
-        <div className="info-item">
-          <div className="label">환율</div>
-          <div className="info-value">₩{new Intl.NumberFormat('ko-KR').format(order.priceKRW)}/USDT</div>
-        </div>
-        <div className="info-item">
-          <div className="label">총 거래 금액</div>
-          <div className="info-value">₩{new Intl.NumberFormat('ko-KR').format(totalKRW)}</div>
-        </div>
-        <div className="info-item">
-          <div className="label">유효 기간</div>
-          <div className="info-value">{formatExpiry(order.expiry)}</div>
-        </div>
-        <div className="info-item">
-          <div className="label">{isSellOrder ? '판매자' : '구매자'}</div>
-          <div className="info-value mono">
-            {shortAddr(isSellOrder ? order.seller : order.buyer)}
+      {/* Seller/Buyer info */}
+      <div className="card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 11 }}>
+          <div className="avatar avatar-lg" style={{
+            background: getAvatarGradient(ownerAddr),
+            color: 'var(--ink)',
+          }}>
+            {getAvatarChar(ownerAddr)}
+          </div>
+          <div>
+            <div className="mono" style={{ fontSize: 12, fontWeight: 700 }}>{shortAddr(ownerAddr)}</div>
+            <div className="stars" style={{ fontSize: 12 }}>★★★★★ <span className="stars-info" style={{ fontSize: 11 }}>5.0</span></div>
           </div>
         </div>
+        <div className="divider" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 7 }}>
+          <span className="muted">{isSellOrder ? '구매 수량' : '판매 수량'}</span>
+          <span style={{ fontWeight: 800, fontSize: 15 }}>{order.amount.toLocaleString()} USDT</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 7 }}>
+          <span className="muted">환율</span>
+          <span style={{ fontWeight: 700 }}>{formatKRW(order.priceKRW)}원/USDT</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 7 }}>
+          <span className="muted">유효기간</span>
+          <span style={{ fontWeight: 700 }}>{formatExpiry(order.expiry)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+          <span className="muted">총 거래 금액</span>
+          <span style={{ fontWeight: 800, color: 'var(--green)' }}>{formatKRW(totalKRW)}원</span>
+        </div>
       </div>
 
-      <div className="divider" />
+      {/* Info banner */}
+      {isSellOrder && !isOwn && (
+        <div className="banner banner-teal">
+          <span className="banner-icon">ℹ️</span>
+          <div className="banner-body">
+            <div className="banner-text">MetaMask 없이 KRW 계좌이체만 하면 됩니다</div>
+          </div>
+        </div>
+      )}
 
       {error && <div className="alert alert-error">{error}</div>}
 
       {isOwn ? (
-        <div className="alert alert-info">
-          내가 등록한 주문입니다. 수락 요청이 오면 알림이 표시됩니다.
+        <div className="banner banner-blue">
+          <span className="banner-icon">📋</span>
+          <div className="banner-body">
+            <div className="banner-text">내가 등록한 주문입니다. 수락 요청이 오면 알림이 표시됩니다.</div>
+          </div>
         </div>
       ) : sent ? (
-        <div className="alert alert-success">
-          수락 요청을 보냈습니다. 판매자의 응답을 기다리세요.
+        <div className="banner banner-green">
+          <span className="banner-icon">✓</span>
+          <div className="banner-body">
+            <div className="banner-title">수락 요청 전송 완료</div>
+            <div className="banner-text">판매자의 응답을 기다리세요.</div>
+          </div>
         </div>
       ) : isSellOrder ? (
         /* Buyer views a sell order → can accept */
-        <button
-          className="btn btn-green btn-block btn-lg"
-          onClick={handleAccept}
-          disabled={sending || order.expiry < Date.now()}
-        >
-          {sending ? '서명 중…' : '이 주문 수락하기'}
-        </button>
+        <>
+          <button
+            className="btn btn-blue"
+            onClick={handleAccept}
+            disabled={sending || order.expiry < Date.now()}
+            style={{ marginBottom: 7 }}
+          >
+            {sending ? '서명 중…' : '수락 요청 보내기'}
+          </button>
+          <button className="btn btn-ghost" onClick={onCancel}>취소</button>
+        </>
       ) : (
         /* Seller views a buy order → can accept by depositing */
-        <button
-          className="btn btn-green btn-block btn-lg"
-          onClick={() => {
-            if (onStartTrade) {
-              onStartTrade(null, 'seller', {
-                orderId: order.id,
-                buyerAddress: order.buyer,
-              })
-            }
-          }}
-          disabled={order.expiry < Date.now()}
-        >
-          이 매수 주문 수락 (에스크로 예치)
-        </button>
+        <>
+          <button
+            className="btn btn-orange"
+            onClick={() => {
+              if (onStartTrade) {
+                onStartTrade(null, 'seller', {
+                  orderId: order.id,
+                  buyerAddress: order.buyer,
+                })
+              }
+            }}
+            disabled={order.expiry < Date.now()}
+            style={{ marginBottom: 7 }}
+          >
+            수락 + 에스크로 락 바로 실행
+          </button>
+          <button className="btn btn-ghost" onClick={onCancel}>취소</button>
+        </>
       )}
+
+      <div className="scroll-gap" />
     </div>
   )
 }

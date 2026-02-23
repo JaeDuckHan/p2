@@ -35,6 +35,9 @@ export default function App() {
   }, [orderbook.requestAccept])
 
   function handleCreated(tradeId) {
+    if (activeTrade?.fromOrderbook && activeTrade?.prefillBuyer && activeTrade?.orderId) {
+      orderbook.notifyTradeCreated(activeTrade.prefillBuyer, activeTrade.orderId, tradeId)
+    }
     setActiveTrade({ tradeId, role: 'seller' })
   }
 
@@ -46,15 +49,24 @@ export default function App() {
     setActiveTrade(null)
   }
 
+  // Auto-navigate buyer to TradeRoom when seller creates escrow
+  useEffect(() => {
+    if (!address || activeTrade?.tradeId) return
+    const notif = orderbook.tradeNotifications.find(
+      n => n.buyer?.toLowerCase() === address?.toLowerCase()
+    )
+    if (notif?.tradeId) {
+      setActiveTrade({ tradeId: notif.tradeId, role: 'buyer' })
+    }
+  }, [orderbook.tradeNotifications, address, activeTrade])
+
   function handleStartTrade(tradeId, role, meta) {
     if (tradeId) {
       setActiveTrade({ tradeId, role })
     } else if (meta?.buyerAddress) {
-      // From orderbook: seller accepted a buyer → go to CreateTrade with prefilled buyer
       setPage('direct')
       setMode('sell')
-      // Store the prefilled buyer address for CreateTrade
-      setActiveTrade({ prefillBuyer: meta.buyerAddress, role: 'seller', fromOrderbook: true })
+      setActiveTrade({ prefillBuyer: meta.buyerAddress, orderId: meta.orderId, role: 'seller', fromOrderbook: true })
     }
   }
 
@@ -70,37 +82,43 @@ export default function App() {
       {/* Header */}
       <div className="header">
         <div className="logo" onClick={() => { setActiveTrade(null); setPage('orderbook') }} style={{ cursor: 'pointer' }}>
-          Mini<span className="accent">Swap</span>
-          <span style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--muted)', marginLeft: '0.4rem' }}>
-            P2P USDT ↔ KRW
-          </span>
+          <div className="logo-icon">M</div>
+          <div>
+            <div className="logo-text">Mini<span className="accent">Swap</span></div>
+            <div className="logo-sub">P2P USDT ↔ KRW</div>
+          </div>
         </div>
         <WalletButton />
       </div>
 
       {/* Main content */}
       {!isConnected ? (
-        /* ── Not connected ────────────────────────────── */
-        <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔐</div>
-          <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>MiniSwap에 오신 것을 환영합니다</h1>
-          <p className="muted" style={{ marginBottom: '2rem' }}>
-            서버 없는 P2P USDT ↔ KRW 직거래 플랫폼<br/>
-            스마트 컨트랙트 에스크로 · Arbitrum One
-          </p>
+        /* ── Splash / Not connected ──────────────────── */
+        <div className="splash">
+          <div className="splash-logo">M</div>
+          <div className="splash-title">MiniSwap</div>
+          <div className="splash-sub">USDT ↔ KRW</div>
+          <div className="splash-pills">
+            <span className="splash-pill">🛡 서버리스</span>
+            <span className="splash-pill">⚡ P2P</span>
+            <span className="splash-pill">🔒 에스크로</span>
+            <span className="splash-pill">💎 Arbitrum</span>
+          </div>
           <WalletButton />
-          <div style={{ marginTop: '2rem', fontSize: '0.82rem', color: 'var(--muted)' }}>
-            MetaMask 또는 호환 지갑이 필요합니다
+          <div className="splash-note">
+            회원가입 없음 · 개인정보 수집 없음
           </div>
         </div>
 
       ) : activeTrade && activeTrade.tradeId ? (
         /* ── Active trade room ────────────────────────── */
-        <TradeRoom
-          tradeId={activeTrade.tradeId}
-          initialRole={activeTrade.role}
-          onExit={handleExit}
-        />
+        <div className="main-content">
+          <TradeRoom
+            tradeId={activeTrade.tradeId}
+            initialRole={activeTrade.role}
+            onExit={handleExit}
+          />
+        </div>
 
       ) : (
         /* ── Home ─────────────────────────────────────── */
@@ -121,77 +139,107 @@ export default function App() {
             </button>
           </div>
 
-          {page === 'orderbook' ? (
-            /* ── Orderbook view ───────────────────────── */
-            <OrderbookView onStartTrade={handleStartTrade} />
+          <div className="main-content">
+            {page === 'orderbook' ? (
+              /* ── Orderbook view ───────────────────────── */
+              <OrderbookView orderbook={orderbook} onStartTrade={handleStartTrade} />
 
-          ) : (
-            /* ── Direct trade (original) ──────────────── */
-            <>
-              <div className="home-grid">
-                <div
-                  className={`role-card ${mode === 'sell' ? 'active' : ''}`}
-                  onClick={() => setMode('sell')}
-                >
-                  <div className="role-icon">📤</div>
-                  <div className="role-title">USDT 팔기</div>
-                  <div className="role-desc">
-                    USDT를 에스크로에 예치하고<br/>
-                    구매자의 KRW 송금을 기다립니다
-                  </div>
-                </div>
-                <div
-                  className={`role-card ${mode === 'buy' ? 'active' : ''}`}
-                  onClick={() => setMode('buy')}
-                >
-                  <div className="role-icon">📥</div>
-                  <div className="role-title">USDT 사기</div>
-                  <div className="role-desc">
-                    판매자에게 거래 ID를 받아<br/>
-                    입장하고 KRW를 송금합니다
-                  </div>
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="card-title">
-                  {mode === 'sell' ? '📤 거래 생성 (판매자)' : '📥 거래 참여 (구매자)'}
-                </div>
-                {mode === 'sell'
-                  ? <CreateTrade onCreated={handleCreated} />
-                  : <JoinTrade   onJoined={handleJoined}  />
-                }
-              </div>
-
-              {/* Info section */}
-              <div className="card" style={{ marginTop: '1rem' }}>
-                <div className="card-title">거래 흐름</div>
-                <div className="steps" style={{ margin: 0 }}>
-                  <div className="step">
-                    <div className="step-num" style={{ background: 'var(--surface2)', color: 'var(--muted)' }}>1</div>
-                    <div className="step-body">
-                      <div className="step-title">판매자 — USDT 예치</div>
-                      <div className="step-desc">USDT가 에스크로에 잠기고, 구매자에게 거래 ID를 공유합니다</div>
+            ) : (
+              /* ── Direct trade (original) ──────────────── */
+              <>
+                <div className="home-grid">
+                  <div
+                    className={`role-card ${mode === 'sell' ? 'active' : ''}`}
+                    onClick={() => setMode('sell')}
+                  >
+                    <div className="role-icon">📤</div>
+                    <div className="role-title">USDT 팔기</div>
+                    <div className="role-desc">
+                      USDT를 에스크로에 예치하고<br/>
+                      구매자의 KRW 송금을 기다립니다
                     </div>
                   </div>
-                  <div className="step">
-                    <div className="step-num" style={{ background: 'var(--surface2)', color: 'var(--muted)' }}>2</div>
-                    <div className="step-body">
-                      <div className="step-title">구매자 — KRW 송금</div>
-                      <div className="step-desc">P2P 채팅으로 계좌를 교환하고 KRW를 이체합니다</div>
-                    </div>
-                  </div>
-                  <div className="step">
-                    <div className="step-num" style={{ background: 'var(--surface2)', color: 'var(--muted)' }}>3</div>
-                    <div className="step-body">
-                      <div className="step-title">판매자 — USDT 릴리즈</div>
-                      <div className="step-desc">입금 확인 후 release() 호출 → 구매자에게 USDT 전송</div>
+                  <div
+                    className={`role-card ${mode === 'buy' ? 'active' : ''}`}
+                    onClick={() => setMode('buy')}
+                  >
+                    <div className="role-icon">📥</div>
+                    <div className="role-title">USDT 사기</div>
+                    <div className="role-desc">
+                      판매자에게 거래 ID를 받아<br/>
+                      입장하고 KRW를 송금합니다
                     </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+
+                <div className="pad">
+                  <div className="card">
+                    <div className="card-title">
+                      {mode === 'sell' ? '📤 거래 생성 (판매자)' : '📥 거래 참여 (구매자)'}
+                    </div>
+                    {mode === 'sell'
+                      ? <CreateTrade onCreated={handleCreated} prefillBuyer={activeTrade?.prefillBuyer} />
+                      : <JoinTrade   onJoined={handleJoined}  />
+                    }
+                  </div>
+
+                  {/* Info section */}
+                  <div className="card">
+                    <div className="card-title">거래 흐름</div>
+                    <div className="steps" style={{ margin: 0 }}>
+                      <div className="step">
+                        <div className="step-num">1</div>
+                        <div className="step-body">
+                          <div className="step-title">판매자 — USDT 예치</div>
+                          <div className="step-desc">USDT가 에스크로에 잠기고, 구매자에게 거래 ID를 공유합니다</div>
+                        </div>
+                      </div>
+                      <div className="step">
+                        <div className="step-num">2</div>
+                        <div className="step-body">
+                          <div className="step-title">구매자 — KRW 송금</div>
+                          <div className="step-desc">P2P 채팅으로 계좌를 교환하고 KRW를 이체합니다</div>
+                        </div>
+                      </div>
+                      <div className="step">
+                        <div className="step-num">3</div>
+                        <div className="step-body">
+                          <div className="step-title">판매자 — USDT 릴리즈</div>
+                          <div className="step-desc">입금 확인 후 release() 호출 → 구매자에게 USDT 전송</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Bottom Navigation */}
+          <div className="bottom-nav">
+            <button
+              className={`bnav-item ${page === 'orderbook' ? 'active' : ''}`}
+              onClick={() => setPage('orderbook')}
+            >
+              <span className="bnav-icon">📊</span>
+              <span className="bnav-label">거래소</span>
+            </button>
+            <button className="bnav-item" onClick={() => { setPage('orderbook'); /* TODO: filter to my orders */ }}>
+              <span className="bnav-icon">📋</span>
+              <span className="bnav-label">내 오더</span>
+            </button>
+            <button className="bnav-item" onClick={() => { setPage('direct'); /* TODO: trade history */ }}>
+              <span className="bnav-icon">🕐</span>
+              <span className="bnav-label">내역</span>
+            </button>
+            <button
+              className={`bnav-item ${page === 'direct' ? 'active' : ''}`}
+              onClick={() => setPage('direct')}
+            >
+              <span className="bnav-icon">👤</span>
+              <span className="bnav-label">직접거래</span>
+            </button>
+          </div>
         </>
       )}
     </div>

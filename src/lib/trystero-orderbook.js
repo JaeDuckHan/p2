@@ -6,12 +6,12 @@
 // Channels:
 //   sell-orders  — broadcast/receive sell orders
 //   buy-orders   — broadcast/receive buy orders
-//   accept-req   — buyer sends accept request to seller
-//   accept-res   — seller responds (accepted / rejected)
 //   sync-req     — request full orderbook from peers on join
+//
+// NOTE: accept-req / accept-res are now handled via XMTP DM (see useOrderbook.js)
 
 import { validateOrder, isOrderExpired, stripSensitiveFields } from '../types/order.js'
-import { verifyOrder, verifyAcceptRequest } from './signature.js'
+import { verifyOrder } from './signature.js'
 import { putOrder, getAllOrders, deleteExpiredOrders } from './indexeddb.js'
 
 const ORDERBOOK_APP_ID = 'miniswap-orderbook-v1'
@@ -26,12 +26,8 @@ const NOSTR_RELAYS = [
  * @typedef {Object} OrderbookRoom
  * @property {function(import('../types/order.js').SellOrder): void} broadcastSellOrder
  * @property {function(import('../types/order.js').BuyOrder): void}  broadcastBuyOrder
- * @property {function(import('../types/order.js').AcceptRequest): void} sendAcceptReq
- * @property {function(import('../types/order.js').AcceptResponse): void} sendAcceptRes
  * @property {function(function(import('../types/order.js').SellOrder, string): void): void} onSellOrder
  * @property {function(function(import('../types/order.js').BuyOrder, string): void): void}  onBuyOrder
- * @property {function(function(import('../types/order.js').AcceptRequest, string): void): void} onAcceptReq
- * @property {function(function(import('../types/order.js').AcceptResponse, string): void): void} onAcceptRes
  * @property {function(function(string): void): void} onPeerJoin
  * @property {function(function(string): void): void} onPeerLeave
  * @property {function(): string[]} getPeers
@@ -61,8 +57,6 @@ export async function createOrderbookRoom(options = {}) {
 
   const [sendSell,    receiveSell]    = room.makeAction('sell-orders')
   const [sendBuy,     receiveBuy]     = room.makeAction('buy-orders')
-  const [sendAccept,  receiveAccept]  = room.makeAction('accept-req')
-  const [sendRespond, receiveRespond] = room.makeAction('accept-res')
   const [sendSync,    receiveSync]    = room.makeAction('sync-req')
 
   // ── Track known order IDs to avoid duplicate processing ──────────────────
@@ -73,8 +67,6 @@ export async function createOrderbookRoom(options = {}) {
 
   let _onSellOrder  = null
   let _onBuyOrder   = null
-  let _onAcceptReq  = null
-  let _onAcceptRes  = null
 
   // ── Incoming order handler (validate + deduplicate + persist) ─────────
 
@@ -116,22 +108,6 @@ export async function createOrderbookRoom(options = {}) {
 
   receiveBuy((order, peerId) => {
     handleIncomingOrder(order, peerId, _onBuyOrder)
-  })
-
-  receiveAccept((req, peerId) => {
-    // Validate accept request signature
-    if (req.signature) {
-      const check = verifyAcceptRequest(req.orderId, req.buyer, req.signature)
-      if (!check.valid) {
-        console.warn(`[orderbook] Bad accept-req signature from ${peerId}`)
-        return
-      }
-    }
-    if (_onAcceptReq) _onAcceptReq(req, peerId)
-  })
-
-  receiveRespond((res, peerId) => {
-    if (_onAcceptRes) _onAcceptRes(res, peerId)
   })
 
   // ── Sync: when a new peer joins, send them our current orders ────────────
@@ -182,28 +158,10 @@ export async function createOrderbookRoom(options = {}) {
       sendBuy(order)
     },
 
-    /**
-     * Send an accept request for an order (buyer → seller).
-     * @param {import('../types/order.js').AcceptRequest} req
-     */
-    sendAcceptReq(req) {
-      sendAccept(req)
-    },
-
-    /**
-     * Send an accept response (seller → buyer).
-     * @param {import('../types/order.js').AcceptResponse} res
-     */
-    sendAcceptRes(res) {
-      sendRespond(res)
-    },
-
     // ── Callback setters ─────────────────────────────────────────────────
 
     onSellOrder(cb)  { _onSellOrder = cb },
     onBuyOrder(cb)   { _onBuyOrder  = cb },
-    onAcceptReq(cb)  { _onAcceptReq = cb },
-    onAcceptRes(cb)  { _onAcceptRes = cb },
 
     onPeerJoin(cb)   { room.onPeerJoin(cb) },
     onPeerLeave(cb)  { room.onPeerLeave(cb) },

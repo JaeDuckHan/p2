@@ -2,7 +2,7 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi'
 
 function shortAddr(addr) {
   if (!addr) return ''
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
 export default function WalletButton() {
@@ -12,16 +12,19 @@ export default function WalletButton() {
 
   if (isConnected) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {chain && (
-          <span className="sm muted">{chain.name}</span>
+          <span className="badge badge-teal" style={{ fontSize: 9, padding: '2px 7px' }}>
+            {chain.name}
+          </span>
         )}
         <button
           className="wallet-btn connected"
           onClick={() => disconnect()}
           title={address}
         >
-          ● {shortAddr(address)}
+          <span className="p2p-dot on" style={{ width: 5, height: 5 }} />
+          {shortAddr(address)}
         </button>
       </div>
     )
@@ -35,7 +38,7 @@ export default function WalletButton() {
       disabled={isPending}
       onClick={() => injector && connect({ connector: injector })}
     >
-      {isPending ? '연결 중...' : '지갑 연결'}
+      {isPending ? '연결 중…' : '🦊 지갑 연결'}
     </button>
   )
 }
