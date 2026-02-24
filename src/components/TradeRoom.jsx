@@ -309,6 +309,27 @@ export default function TradeRoom({ tradeId, initialRole, onExit }) {
             </div>
           )}
 
+          {/* P1: MiniSwap 에스크로 보호 시스템 안내 */}
+          {status === TradeStatus.LOCKED && (
+            <div className="escrow-info">
+              <div className="escrow-info-title">
+                🛡 MiniSwap 에스크로 보호 시스템
+              </div>
+              <div className="escrow-info-item">
+                <span className="escrow-info-icon">🔒</span>
+                <span>스마트 컨트랙트가 USDT를 안전하게 보관합니다. 양측 합의 없이는 자금이 이동하지 않습니다.</span>
+              </div>
+              <div className="escrow-info-item">
+                <span className="escrow-info-icon">⏱</span>
+                <span>타임아웃 보호 — 기한 초과 시 판매자가 환불받을 수 있습니다.</span>
+              </div>
+              <div className="escrow-info-item">
+                <span className="escrow-info-icon">⚖️</span>
+                <span>분쟁 발생 시 제3자 중재를 통해 공정하게 해결됩니다.</span>
+              </div>
+            </div>
+          )}
+
           {/* P2P Chat */}
           <div className="card" style={{ marginBottom: 9 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>

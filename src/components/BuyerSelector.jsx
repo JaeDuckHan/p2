@@ -1,4 +1,5 @@
 import { getAvatarGradient, getAvatarChar } from './OrderbookView'
+import { getUserRating } from '../lib/mockData'
 
 /**
  * BuyerSelector — Seller picks a buyer from multiple accept requests.
@@ -99,7 +100,10 @@ export default function BuyerSelector({ order, requests, onSelect, onReject }) {
                   <span className="badge badge-green" style={{ fontSize: 9, padding: '2px 6px' }}>추천</span>
                 )}
               </div>
-              <div className="stars" style={{ fontSize: 10 }}>★★★★★ <span className="stars-info">5.0</span></div>
+              {/* TODO: 실제 온체인 API 연동 필요 — 평판 데이터 연동 시 realData 전달 */}
+              {(() => { const r = getUserRating(req.buyer); return (
+                <div className="stars" style={{ fontSize: 10 }}>{r.stars} <span className="stars-info">{r.score.toFixed(1)}{r.tradeCount > 0 ? ` · ${r.tradeCount}회` : ''}</span></div>
+              ) })()}
               <div style={{ fontSize: 10, color: 'var(--snow3)', marginTop: 1 }}>
                 {formatTime(req.timestamp)} · 서명 ✓
               </div>

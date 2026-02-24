@@ -3,6 +3,7 @@ import { useAccount, useWalletClient } from 'wagmi'
 import { BrowserProvider } from 'ethers'
 import { signAcceptRequest } from '../lib/signature'
 import { getAvatarGradient, getAvatarChar } from './OrderbookView'
+import { getUserRating } from '../lib/mockData'
 
 /**
  * OrderDetail — Shows order info with accept button for buyers.
@@ -158,7 +159,10 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
           </div>
           <div>
             <div className="mono" style={{ fontSize: 12, fontWeight: 700 }}>{shortAddr(ownerAddr)}</div>
-            <div className="stars" style={{ fontSize: 12 }}>★★★★★ <span className="stars-info" style={{ fontSize: 11 }}>5.0</span></div>
+            {/* TODO: 실제 온체인 API 연동 필요 — 평판 데이터 연동 시 realData 전달 */}
+            {(() => { const r = getUserRating(ownerAddr); return (
+              <div className="stars" style={{ fontSize: 12 }}>{r.stars} <span className="stars-info" style={{ fontSize: 11 }}>{r.score.toFixed(1)}{r.tradeCount > 0 ? ` · ${r.tradeCount}회` : ''}</span></div>
+            ) })()}
           </div>
         </div>
         <div className="divider" />
@@ -180,14 +184,27 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
         </div>
       </div>
 
-      {/* Info banner */}
+      {/* Info banner + 에스크로 안내 */}
       {isSellOrder && !isOwn && (
-        <div className="banner banner-teal">
-          <span className="banner-icon">ℹ️</span>
-          <div className="banner-body">
-            <div className="banner-text">MetaMask 없이 KRW 계좌이체만 하면 됩니다</div>
+        <>
+          <div className="banner banner-teal">
+            <span className="banner-icon">ℹ️</span>
+            <div className="banner-body">
+              <div className="banner-text">MetaMask 없이 KRW 계좌이체만 하면 됩니다</div>
+            </div>
           </div>
-        </div>
+          <div className="escrow-info">
+            <div className="escrow-info-title">🛡 에스크로 보호 거래</div>
+            <div className="escrow-info-item">
+              <span className="escrow-info-icon">🔒</span>
+              <span>USDT는 스마트 컨트랙트에 안전하게 보관됩니다</span>
+            </div>
+            <div className="escrow-info-item">
+              <span className="escrow-info-icon">⚖️</span>
+              <span>분쟁 시 제3자 중재로 공정하게 해결됩니다</span>
+            </div>
+          </div>
+        </>
       )}
 
       {error && <div className="alert alert-error">{error}</div>}

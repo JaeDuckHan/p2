@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAccount } from 'wagmi'
 import WalletButton   from './components/WalletButton'
 import CreateTrade    from './components/CreateTrade'
@@ -22,8 +22,42 @@ export default function App() {
 
   const orderbook = useOrderbook({ enabled: isConnected })
 
+  // Onboarding guide: 첫 접속 유저에게만 표시, 닫으면 localStorage에 저장
+  const [showGuide, setShowGuide] = useState(() => {
+    return !localStorage.getItem('miniswap_guide_dismissed')
+  })
+  const dismissGuide = useCallback(() => {
+    setShowGuide(false)
+    localStorage.setItem('miniswap_guide_dismissed', '1')
+  }, [])
+
   const SUPPORTED = [31337, 42161, 421614]
   const wrongNetwork = isConnected && chainId && !SUPPORTED.includes(chainId)
+
+  // P1: 네트워크 자동 전환 — wallet_addEthereumChain 사용
+  const switchToArbitrum = useCallback(async () => {
+    if (!window.ethereum) return
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x66eee' }], // 421614 = Arbitrum Sepolia
+      })
+    } catch (switchError) {
+      // 4902: chain not added yet → add it
+      if (switchError.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x66eee',
+            chainName: 'Arbitrum Sepolia',
+            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+            rpcUrls: ['https://sepolia-rollup.arbitrum.io/rpc'],
+            blockExplorerUrls: ['https://sepolia.arbiscan.io'],
+          }],
+        })
+      }
+    }
+  }, [])
 
   // Listen for accept-req events from OrderDetail component
   useEffect(() => {
@@ -72,10 +106,20 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Wrong network banner */}
+      {/* Wrong network banner — P1: 클릭 한 번에 네트워크 자동 전환 */}
       {wrongNetwork && (
-        <div className="network-warn">
-          ⚠ 지원하지 않는 네트워크입니다. Arbitrum One 또는 로컬 Hardhat으로 전환하세요.
+        <div className="network-warn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span>⚠ 지원하지 않는 네트워크입니다.</span>
+          <button
+            onClick={switchToArbitrum}
+            style={{
+              background: 'var(--amber)', color: 'var(--ink)', border: 'none',
+              borderRadius: 8, padding: '4px 12px', fontSize: 11, fontWeight: 800,
+              cursor: 'pointer', fontFamily: 'var(--sans)',
+            }}
+          >
+            Arbitrum Sepolia로 전환
+          </button>
         </div>
       )}
 
@@ -123,6 +167,37 @@ export default function App() {
       ) : (
         /* ── Home ─────────────────────────────────────── */
         <>
+          {/* P1~P2: 'No KYC, No 가입' 상시 신뢰 배너 */}
+          <div className="trust-banner">
+            <span className="trust-banner-item">🔒 No KYC</span>
+            <span className="trust-banner-item">🛡 개인정보 수집 없음</span>
+            <span className="trust-banner-item">⚡ 가입 불필요</span>
+          </div>
+
+          {/* P0: 온보딩 가이드 배너 — 첫 접속 유저용 */}
+          {showGuide && (
+            <div className="guide-banner">
+              <button className="guide-banner-close" onClick={dismissGuide}>✕</button>
+              <div className="guide-banner-title">처음이신가요? 3단계로 시작하세요</div>
+              <div className="guide-steps">
+                <div className="guide-step">
+                  <div className="guide-step-icon">🦊</div>
+                  <div className="guide-step-label">지갑 연결</div>
+                </div>
+                <div className="guide-arrow">→</div>
+                <div className="guide-step">
+                  <div className="guide-step-icon">💎</div>
+                  <div className="guide-step-label">USDT 준비</div>
+                </div>
+                <div className="guide-arrow">→</div>
+                <div className="guide-step">
+                  <div className="guide-step-icon">🤝</div>
+                  <div className="guide-step-label">P2P 거래</div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Top-level tabs: 오더북 | 직접거래 */}
           <div className="page-tabs">
             <button

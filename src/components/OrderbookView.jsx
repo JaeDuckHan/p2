@@ -4,6 +4,7 @@ import SellOrderForm from './SellOrderForm'
 import BuyOrderForm from './BuyOrderForm'
 import OrderDetail from './OrderDetail'
 import BuyerSelector from './BuyerSelector'
+import { getUserRating } from '../lib/mockData'
 
 // Avatar gradient presets
 const AVATAR_GRADIENTS = [
@@ -328,7 +329,10 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
                     </div>
                     <div>
                       <div className="oc-seller-addr">{shortAddr(ownerAddr)}</div>
-                      <div className="stars">★★★★★ <span className="stars-info">5.0</span></div>
+                      {/* TODO: 실제 온체인 API 연동 필요 — 평판 데이터 연동 시 realData 전달 */}
+                      {(() => { const r = getUserRating(ownerAddr); return (
+                        <div className="stars">{r.stars} <span className="stars-info">{r.score.toFixed(1)}{r.tradeCount > 0 ? ` · ${r.tradeCount}회` : ''}</span></div>
+                      ) })()}
                     </div>
                   </div>
                   {isOwn && reqCount > 0 ? (

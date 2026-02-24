@@ -1096,5 +1096,158 @@ select.input {
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 .blink { animation: blink 1.4s ease-in-out infinite; }
 
+/* ── Modal Overlay ──────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.modal-content {
+  background: var(--ink2);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 380px;
+  width: 100%;
+  animation: fadeIn .2s ease both;
+}
+
+/* ── Onboarding Guide Banner ───────────────────────────────────────────── */
+.guide-banner {
+  margin: 8px 20px 0;
+  background: linear-gradient(135deg, var(--ink3), var(--ink4));
+  border: 1px solid var(--teal-b);
+  border-radius: var(--radius);
+  padding: 16px;
+  position: relative;
+}
+.guide-banner-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--snow3);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.guide-banner-close:hover { color: var(--snow); }
+.guide-banner-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: var(--teal);
+}
+.guide-steps {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.guide-step {
+  flex: 1;
+  text-align: center;
+}
+.guide-step-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink4);
+  border: 1px solid var(--line2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin: 0 auto 6px;
+}
+.guide-step-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--snow2);
+  line-height: 1.3;
+}
+.guide-arrow {
+  font-size: 14px;
+  color: var(--teal);
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Trust/Marketing Banner ────────────────────────────────────────────── */
+.trust-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 7px 20px;
+  background: var(--teal-d);
+  border-bottom: 1px solid var(--teal-b);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.trust-banner-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--teal);
+  white-space: nowrap;
+}
+
+/* ── Escrow Info Section ───────────────────────────────────────────────── */
+.escrow-info {
+  background: linear-gradient(135deg, var(--grn-d), var(--ink3));
+  border: 1px solid var(--grn-b);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 9px;
+}
+.escrow-info-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--green);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.escrow-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--snow2);
+  line-height: 1.5;
+}
+.escrow-info-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Fee Marketing ─────────────────────────────────────────────────────── */
+.fee-compare {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--teal-d);
+  border: 1px solid var(--teal-b);
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--teal);
+}
+
 /* ── Spacing ─────────────────────────────────────────────────────────────── */
 .scroll-gap { height: 20px; }

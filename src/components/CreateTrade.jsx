@@ -155,6 +155,10 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
             <span style={{ color: 'var(--snow3)' }}>수수료 (2%)</span>
             <span style={{ color: 'var(--red)' }}>−{formatUsdt(fee)} USDT</span>
           </div>
+          {/* P1~P2: CEX 대비 수수료 비교 마케팅 */}
+          <div className="fee-compare">
+            🏷 중앙화 거래소(CEX) 대비 약 80% 저렴
+          </div>
           <div className="divider" style={{ margin: '7px 0' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
             <span style={{ color: 'var(--snow3)' }}>총 필요 금액</span>

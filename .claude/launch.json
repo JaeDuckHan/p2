@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "frontend",
-      "runtimeExecutable": "D:\\node\\node.exe",
-      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5173"],
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["D:/p2pusdt/node_modules/vite/bin/vite.js", "--port", "5173", "--host", "127.0.0.1"],
       "port": 5173
     },
     {
