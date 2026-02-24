@@ -3,6 +3,7 @@ import { useAccount, useWalletClient } from 'wagmi'
 import { BrowserProvider } from 'ethers'
 import { signAcceptRequest } from '../lib/signature'
 import { getAvatarGradient, getAvatarChar } from './OrderbookView'
+import { getUserProfile, renderStars } from '../mockData'
 
 /**
  * OrderDetail — Shows order info with accept button for buyers.
@@ -158,7 +159,10 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
           </div>
           <div>
             <div className="mono" style={{ fontSize: 12, fontWeight: 700 }}>{shortAddr(ownerAddr)}</div>
-            <div className="stars" style={{ fontSize: 12 }}>★★★★★ <span className="stars-info" style={{ fontSize: 11 }}>5.0</span></div>
+            {/* TODO: 실제 온체인 API 연동 필요 */}
+            {(() => { const p = getUserProfile(ownerAddr); return (
+              <div className="stars" style={{ fontSize: 12 }}>{renderStars(p.rating)} <span className="stars-info" style={{ fontSize: 11 }}>{p.rating.toFixed(1)}</span></div>
+            ) })()}
           </div>
         </div>
         <div className="divider" />

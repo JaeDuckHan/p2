@@ -280,6 +280,30 @@ export default function TradeRoom({ tradeId, initialRole, onExit }) {
             </div>
           )}
 
+          {/* Escrow protection info */}
+          {status === TradeStatus.LOCKED && (
+            <div className="card" style={{ borderColor: 'var(--teal-b)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 20 }}>&#x1F6E1;&#xFE0F;</span>
+                <div className="card-title" style={{ margin: 0, color: 'var(--teal)' }}>에스크로 보호 시스템</div>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--snow3)', lineHeight: 1.7 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                  <span style={{ color: 'var(--green)', flexShrink: 0 }}>&#x1F512;</span>
+                  <span>USDT가 <strong style={{ color: 'var(--snow)' }}>스마트 컨트랙트</strong>에 안전하게 잠겨 있습니다. 어느 누구도 임의로 인출할 수 없습니다.</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                  <span style={{ color: 'var(--amber)', flexShrink: 0 }}>&#x23F0;</span>
+                  <span>7일 안에 거래가 완료되지 않으면 판매자가 <strong style={{ color: 'var(--snow)' }}>자동 환불</strong> 받을 수 있습니다.</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ color: 'var(--blue)', flexShrink: 0 }}>&#x2696;&#xFE0F;</span>
+                  <span>문제 발생 시 <strong style={{ color: 'var(--snow)' }}>분쟁 시스템</strong>으로 운영자가 30일 내 중재합니다.</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Completed status banners */}
           {status === TradeStatus.RELEASED && (
             <div className="banner banner-green">

@@ -4,6 +4,7 @@ import SellOrderForm from './SellOrderForm'
 import BuyOrderForm from './BuyOrderForm'
 import OrderDetail from './OrderDetail'
 import BuyerSelector from './BuyerSelector'
+import { getUserProfile, renderStars } from '../mockData'
 
 // Avatar gradient presets
 const AVATAR_GRADIENTS = [
@@ -96,8 +97,8 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
       <div className="fade-in">
         <div className="app-bar">
           <button className="app-bar-back" onClick={() => setFormMode(null)}>←</button>
-          <div className="app-bar-title">📤 판매 오더 올리기</div>
-          <div style={{ width: 32 }} />
+          <div className="app-bar-title">📤 판매 오더 생성</div>
+          <div style={{ width: 36 }} />
         </div>
         <div className="pad">
           <SellOrderForm
@@ -116,8 +117,8 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
       <div className="fade-in">
         <div className="app-bar">
           <button className="app-bar-back" onClick={() => setFormMode(null)}>←</button>
-          <div className="app-bar-title">📥 구매 오더 올리기</div>
-          <div style={{ width: 32 }} />
+          <div className="app-bar-title">📥 구매 오더 생성</div>
+          <div style={{ width: 36 }} />
         </div>
         <div className="pad">
           <BuyOrderForm
@@ -141,7 +142,7 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
           <div className="app-bar-title">
             {selectedOrder.type === 'SELL' ? '판매 오더 상세' : '구매 오더 상세'}
           </div>
-          <div style={{ width: 32 }} />
+          <div style={{ width: 36 }} />
         </div>
         <OrderDetail
           order={selectedOrder}
@@ -170,7 +171,7 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
         <div className="app-bar">
           <button className="app-bar-back" onClick={() => setSelectingBuyerForOrder(null)}>←</button>
           <div className="app-bar-title">구매 요청</div>
-          <div style={{ width: 32 }} />
+          <div style={{ width: 36 }} />
         </div>
         <BuyerSelector
           order={order}
@@ -198,6 +199,8 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
 
   // ── Main orderbook list ─────────────────────────────────────────────────
 
+  const totalOrders = orderbook.sellOrders.length + orderbook.buyOrders.length
+
   return (
     <div className="fade-in">
       {/* Page header */}
@@ -220,6 +223,35 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
         </div>
       </div>
 
+      {/* Hero CTA Section */}
+      <div className="hero-connected">
+        <div className="hero-connected-title">
+          P2P USDT ↔ KRW<br/>
+          <span className="accent">안전한 에스크로</span> 기반 거래
+        </div>
+        <div className="hero-connected-sub">
+          스마트 컨트랙트가 자금을 보호합니다
+        </div>
+        <div className="hero-connected-ctas">
+          <button className="hero-cta-btn sell" onClick={() => setFormMode('sell-form')}>
+            📤 판매 시작하기
+          </button>
+          <button className="hero-cta-btn buy" onClick={() => setFormMode('buy-form')}>
+            📥 구매 시작하기
+          </button>
+        </div>
+      </div>
+
+      {/* Live stats */}
+      <div className="live-stats">
+        <div className="live-stat">
+          📊 오더 <span className="teal">{totalOrders}건</span>
+        </div>
+        <div className="live-stat">
+          👥 접속 <span className="green">{orderbook.peerCount || 0}명</span>
+        </div>
+      </div>
+
       {/* Accept request notification */}
       {myAcceptRequests.length > 0 && (
         <div className="pad" style={{ paddingTop: 8 }}>
@@ -233,7 +265,7 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
         </div>
       )}
 
-      {/* Orderbook tabs */}
+      {/* Orderbook tabs — underline style */}
       <div className="ob-tabs">
         <div
           className={`ob-tab ${tab === 'sell' ? 'sell-active' : ''}`}
@@ -252,27 +284,19 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
       {/* Tab description */}
       <div className="ob-desc">
         {tab === 'sell' ? (
-          <>💡 <strong style={{ color: 'var(--amber)' }}>판매 오더</strong> — USDT 팔고 싶은 사람들의 목록. 구매자가 수락하면 거래 시작.</>
+          <>&#x1F6E1;&#xFE0F; <strong style={{ color: 'var(--amber)' }}>판매 오더</strong> — 에스크로 보호 하에 USDT 구매 가능</>
         ) : (
-          <>💡 <strong style={{ color: 'var(--blue)' }}>구매 오더</strong> — USDT 사고 싶은 사람들의 목록. 판매자가 수락하면 바로 에스크로 락.</>
+          <>&#x1F6E1;&#xFE0F; <strong style={{ color: 'var(--blue)' }}>구매 오더</strong> — 에스크로 보호 하에 USDT 판매 가능</>
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className="action-row">
+      {/* CTA Buttons — prominent create order */}
+      <div className="cta-row">
         <button
-          className="btn btn-sm btn-amber"
-          style={{ flex: 1, padding: 10 }}
-          onClick={() => setFormMode('sell-form')}
+          className={`cta-create ${tab === 'sell' ? 'sell' : 'buy'}`}
+          onClick={() => setFormMode(tab === 'sell' ? 'sell-form' : 'buy-form')}
         >
-          📤 판매 오더 올리기
-        </button>
-        <button
-          className="btn btn-sm btn-blue"
-          style={{ flex: 1, padding: 10 }}
-          onClick={() => setFormMode('buy-form')}
-        >
-          📥 구매 오더 올리기
+          + {tab === 'sell' ? '판매 오더 생성하기' : '구매 오더 생성하기'}
         </button>
       </div>
 
@@ -291,16 +315,25 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
         </div>
       </div>
 
-      {/* Order list */}
+      {/* Order list or Empty state */}
       {orders.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-          <div style={{ fontSize: '2rem', marginBottom: 8 }}>
+        <div className="empty-state">
+          <div className="empty-icon">
             {tab === 'sell' ? '📤' : '📥'}
           </div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
-            {tab === 'sell' ? '매도' : '매수'} 주문이 없습니다
+          <div className="empty-title">
+            아직 등록된 {tab === 'sell' ? '판매' : '구매'} 오더가 없습니다
           </div>
-          <div className="sm muted">피어가 연결되면 주문이 표시됩니다</div>
+          <div className="empty-desc">
+            첫 번째 거래자가 되어보세요.<br/>
+            지금 등록하면 상단에 노출됩니다.
+          </div>
+          <button
+            className="empty-cta"
+            onClick={() => setFormMode(tab === 'sell' ? 'sell-form' : 'buy-form')}
+          >
+            + {tab === 'sell' ? '판매 오더 등록하기' : '구매 오더 등록하기'}
+          </button>
         </div>
       ) : (
         <div className="pad">
@@ -310,6 +343,7 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
             const isOwn = ownerAddr?.toLowerCase() === address?.toLowerCase()
             const reqCount = orderbook.acceptRequests.filter(r => r.orderId === order.id).length
             const totalKRW = Math.round(order.amount * order.priceKRW)
+            const profile = getUserProfile(ownerAddr)
 
             return (
               <div
@@ -328,7 +362,7 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
                     </div>
                     <div>
                       <div className="oc-seller-addr">{shortAddr(ownerAddr)}</div>
-                      <div className="stars">★★★★★ <span className="stars-info">5.0</span></div>
+                      <div className="stars">{renderStars(profile.rating)} <span className="stars-info">{profile.rating.toFixed(1)}</span></div>
                     </div>
                   </div>
                   {isOwn && reqCount > 0 ? (
@@ -336,7 +370,7 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
                   ) : isOwn ? (
                     <span className="badge badge-teal">내 주문</span>
                   ) : isSell ? (
-                    <span className="badge badge-green">🔒 에스크로↑</span>
+                    <span className="badge badge-green">🔒 에스크로</span>
                   ) : (
                     <span className="badge badge-blue">📥 구매 희망</span>
                   )}
@@ -362,6 +396,7 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
                 <div className="oc-bottom">
                   <div className="oc-meta">
                     <span>⏱ {formatExpiry(order.expiry)}</span>
+                    <span>거래 {profile.tradeCount}회</span>
                   </div>
                   <button
                     className={`btn btn-sm ${isSell ? 'btn-blue' : 'btn-amber'}`}

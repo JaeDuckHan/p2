@@ -152,7 +152,7 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
             <span style={{ fontWeight: 800 }}>{formatUsdt(amountBig)} USDT</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 5 }}>
-            <span style={{ color: 'var(--snow3)' }}>수수료 (2%)</span>
+            <span style={{ color: 'var(--snow3)' }}>수수료 (2%) <span style={{ fontSize: 9, color: 'var(--green)' }}>CEX 대비 ~80% 저렴</span></span>
             <span style={{ color: 'var(--red)' }}>−{formatUsdt(fee)} USDT</span>
           </div>
           <div className="divider" style={{ margin: '7px 0' }} />

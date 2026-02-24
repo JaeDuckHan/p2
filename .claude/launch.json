@@ -4,7 +4,7 @@
     {
       "name": "frontend",
       "runtimeExecutable": "D:\\node\\node.exe",
-      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5173"],
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5173", "--host", "--force"],
       "port": 5173
     },
     {
@@ -42,6 +42,48 @@
       "runtimeExecutable": "D:\\node\\node.exe",
       "runtimeArgs": ["scripts/git-followup.js"],
       "port": 9995
+    }
+    ,{
+      "name": "git-status-p2",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-status-p2.js"],
+      "port": 9993
+    }
+    ,{
+      "name": "git-check",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-check.js"],
+      "port": 9991
+    }
+    ,{
+      "name": "git-commit-push",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-commit-push.js"],
+      "port": 9990
+    }
+    ,{
+      "name": "git-rebase-continue",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-rebase-continue.js"],
+      "port": 9987
+    }
+    ,{
+      "name": "npm-install",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/npm-install.js"],
+      "port": 9986
+    }
+    ,{
+      "name": "git-info",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-info.js"],
+      "port": 9985
+    }
+    ,{
+      "name": "git-rebase-commit-push",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-rebase-commit-push.js"],
+      "port": 9984
     }
   ]
 }

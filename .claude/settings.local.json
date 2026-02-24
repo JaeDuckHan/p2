@@ -6,7 +6,8 @@
       "Bash(npm:*)",
       "Bash(node:*)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(D:/node/node.exe node_modules/hardhat/internal/cli/bootstrap.js compile:*)"
+      "Bash(D:/node/node.exe node_modules/hardhat/internal/cli/bootstrap.js compile:*)",
+      "Bash(D:/Git/bin/git.exe log --oneline -10)"
     ]
   }
 }
