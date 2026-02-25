@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useSwitchChain } from 'wagmi'
-import { isAddress } from 'viem'
+import { isAddress, formatEther } from 'viem'
 import {
   useCalcTotal,
   useUsdtBalance,
   useUsdtAllowance,
   useApproveUsdt,
-  useDeposit,
+  useRelayDeposit,
+  useEthBalance,
+  useRequestDrip,
   getEscrowAddress,
   formatUsdt,
   parseUsdt,
 } from '../hooks/useEscrow'
 
+const MAINNET_CHAIN_ID = 42161
+const MIN_ETH_FOR_APPROVE = 50_000_000_000_000n // 0.00005 ETH — approve 가스비
+
 /**
- * CreateTrade — Direct escrow deposit (S08 에스크로 락 style)
+ * CreateTrade — 가스비 대납 에스크로 예치 (판매자만 ETH 필요: approve 1회)
  */
 export default function CreateTrade({ onCreated, prefillBuyer }) {
   const { address, chainId } = useAccount()
@@ -22,7 +27,6 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
   const [buyer,  setBuyer]  = useState(prefillBuyer || '')
   const [amount, setAmount] = useState('')
 
-  // Sync prefillBuyer prop changes
   useEffect(() => {
     if (prefillBuyer) setBuyer(prefillBuyer)
   }, [prefillBuyer])
@@ -32,13 +36,16 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
   const balance    = useUsdtBalance(address, chainId)
   const { allowance, refetch: refetchAllowance } = useUsdtAllowance(address, chainId)
   const escrowAddr = getEscrowAddress(chainId)
+  const ethBalance = useEthBalance()
 
   const needsApproval = amountBig > 0n && allowance < total
+  const needsEth      = needsApproval && ethBalance < MIN_ETH_FOR_APPROVE
 
   const [step, setStep] = useState('idle')
 
   const { approve, isPending: approvePending, isConfirming: approveConfirming, isSuccess: approveSuccess, error: approveErr } = useApproveUsdt(chainId)
-  const { deposit, isPending: depositPending, isConfirming: depositConfirming, isSuccess: depositSuccess, tradeId, error: depositErr } = useDeposit(chainId)
+  const { deposit, isPending: depositPending, isConfirming: depositConfirming, isSuccess: depositSuccess, tradeId, error: depositErr, reset: depositReset } = useRelayDeposit(chainId)
+  const { requestDrip, isDripping, dripTxHash, dripError } = useRequestDrip()
 
   useEffect(() => {
     if (approveSuccess && step === 'approving') {
@@ -59,7 +66,7 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
   const selfTrade = buyerOk && buyer.toLowerCase() === address?.toLowerCase()
   const enoughBal = balance >= total
 
-  const canApprove  = buyerOk && amountOk && !selfTrade && !approvePending && !approveConfirming
+  const canApprove  = buyerOk && amountOk && !selfTrade && !needsEth && !approvePending && !approveConfirming
   const canDeposit  = buyerOk && amountOk && !selfTrade && enoughBal && !needsApproval && !depositPending && !depositConfirming
 
   const handleApprove = () => { setStep('approving'); approve(total) }
@@ -67,9 +74,6 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
 
   const txError = approveErr || depositErr
   const isWorking = approvePending || approveConfirming || depositPending || depositConfirming
-
-  // Current step for indicator
-  const currentStep = needsApproval ? 0 : 1
 
   if (!escrowAddr) {
     return (
@@ -82,9 +86,9 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
         }}>⚠️</div>
         <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 7 }}>잘못된 네트워크</div>
         <div style={{ fontSize: 13, color: 'var(--snow3)', lineHeight: 1.8, marginBottom: 24 }}>
-          <strong style={{ color: 'var(--teal)' }}>Arbitrum Sepolia</strong> 로 변경 필요
+          <strong style={{ color: 'var(--teal)' }}>Arbitrum One</strong> 메인넷으로 변경 필요
         </div>
-        <button className="btn btn-teal" onClick={() => switchChain({ chainId: 421614 })}>
+        <button className="btn btn-teal" onClick={() => switchChain({ chainId: MAINNET_CHAIN_ID })}>
           자동으로 네트워크 전환
         </button>
       </div>
@@ -168,13 +172,52 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
         </div>
       )}
 
-      {/* MetaMask popup notice */}
-      <div className="banner banner-amber">
-        <span className="banner-icon">⚡</span>
-        <div className="banner-body">
-          <div className="banner-text">MetaMask 팝업 <strong>2번</strong> — approve → deposit 순서</div>
+      {/* ETH drip banner — 최초 1회 ETH 필요 */}
+      {needsEth && (
+        <div className="banner banner-amber" style={{ marginBottom: 12 }}>
+          <span className="banner-icon">⚠️</span>
+          <div className="banner-body">
+            <div className="banner-text" style={{ marginBottom: 6 }}>
+              <strong>최초 1회 ETH 필요</strong> — USDT 승인 가스비<br/>
+              <span style={{ fontSize: 11, color: 'var(--snow3)' }}>
+                현재 잔액: {formatEther(ethBalance).slice(0, 8)} ETH
+              </span>
+            </div>
+            {dripTxHash ? (
+              <div style={{ fontSize: 11, color: 'var(--green)' }}>
+                ✅ 0.001 ETH 전송 완료! 잠시 후 잔액이 업데이트됩니다.
+              </div>
+            ) : dripError ? (
+              <div style={{ fontSize: 11, color: 'var(--red)' }}>
+                {dripError.message?.includes('Already has enough ETH')
+                  ? '이미 ETH가 있습니다. 잠시 후 다시 시도하세요.'
+                  : dripError.message?.includes('Already dripped')
+                  ? '이미 ETH를 받으셨습니다. 잠시 기다려주세요.'
+                  : `오류: ${dripError.message}`}
+              </div>
+            ) : (
+              <button
+                className="btn btn-amber"
+                style={{ fontSize: 12, padding: '5px 14px', marginTop: 4 }}
+                disabled={isDripping}
+                onClick={requestDrip}
+              >
+                {isDripping ? '전송 중...' : '🪂 ETH 받기 (0.001 ETH 무료)'}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* 가스비 대납 안내 */}
+      {!needsApproval && (
+        <div className="banner banner-teal" style={{ marginBottom: 12 }}>
+          <span className="banner-icon">⚡</span>
+          <div className="banner-body">
+            <div className="banner-text">에스크로 예치는 <strong>가스비 무료</strong> — 서명만 하시면 됩니다</div>
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {txError && (
@@ -192,7 +235,8 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
         >
           {approvePending    ? '지갑 승인 대기 중...'     :
            approveConfirming ? '승인 트랜잭션 확인 중...' :
-           '① USDT 사용 허가'}
+           needsEth          ? '⚠ ETH 먼저 받으세요'     :
+           '① USDT 사용 허가 (1회만)'}
         </button>
       ) : (
         <button
@@ -200,9 +244,9 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
           disabled={!canDeposit || isWorking}
           onClick={handleDeposit}
         >
-          {depositPending    ? '지갑 서명 대기 중...'   :
+          {depositPending    ? '서명 대기 중...'          :
            depositConfirming ? '예치 트랜잭션 확인 중...' :
-           '🔒 에스크로 락 실행'}
+           '🔒 에스크로 락 실행 (가스비 무료)'}
         </button>
       )}
     </div>

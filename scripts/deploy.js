@@ -16,6 +16,10 @@ async function main() {
   const feeRecipient  = signers[1] || signers[0]
   const admin1        = signers[2] || signers[0]
   const admin2        = signers[3] || signers[0]
+  // relayer: 별도 주소 지정 가능, 없으면 배포자 주소 사용
+  const relayer       = process.env.RELAYER_ADDRESS
+    ? { address: process.env.RELAYER_ADDRESS }
+    : signers[0]
 
   const network  = hre.network.name
   const chainId  = Number((await ethers.provider.getNetwork()).chainId)
@@ -26,6 +30,7 @@ async function main() {
   console.log('feeRecipient :', feeRecipient.address)
   console.log('admin1       :', admin1.address)
   console.log('admin2       :', admin2.address)
+  console.log('relayer      :', relayer.address)
   console.log('────────────────────────────────────────')
 
   // ── USDT 주소 결정 ────────────────────────────────────────────
@@ -64,7 +69,8 @@ async function main() {
     usdtAddress,
     feeRecipient.address,
     admin1.address,
-    admin2.address
+    admin2.address,
+    relayer.address        // ← 가스비 대납 릴레이어
   )
   await escrow.waitForDeployment()
   const escrowAddress = await escrow.getAddress()

@@ -1,7 +1,9 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useWalletClient, usePublicClient, useBalance } from 'wagmi'
 import { parseEventLogs, parseUnits, formatUnits } from 'viem'
+import { useState } from 'react'
 import { ESCROW_ABI, USDT_ABI, USDT_DECIMALS, USDT_ADDRESSES } from '../constants'
 import { DEPLOYMENTS } from '../deployments'
+import { relayEscrowAction, requestEthDrip } from '../lib/relay'
 
 // ─── Address helpers ───────────────────────────────────────────────────────────
 
@@ -200,4 +202,131 @@ export function useDispute(chainId) {
   }
 
   return { dispute, isPending, isConfirming, isSuccess, error }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  가스비 대납 릴레이 훅 (사용자 ETH 불필요 — 배포자가 가스비 지불)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ─── 공통 릴레이 훅 팩토리 ────────────────────────────────────────────────────
+function useRelayAction(chainId) {
+  const escrowAddr               = getEscrowAddress(chainId)
+  const { data: walletClient }   = useWalletClient()
+  const publicClient             = usePublicClient()
+  const { address }              = useAccount()
+
+  const [hash,         setHash]         = useState(null)
+  const [isPending,    setIsPending]    = useState(false)
+  const [error,        setError]        = useState(null)
+
+  const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash })
+
+  async function relay(action, params) {
+    if (!escrowAddr || !walletClient || !publicClient || !address) return
+    setIsPending(true)
+    setError(null)
+    try {
+      const { txHash } = await relayEscrowAction(walletClient, publicClient, {
+        action,
+        params,
+        from:          address,
+        escrowAddress: escrowAddr,
+        chainId,
+      })
+      setHash(txHash)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setIsPending(false)
+    }
+  }
+
+  function reset() {
+    setHash(null)
+    setError(null)
+    setIsPending(false)
+  }
+
+  return { relay, isPending, isConfirming, isSuccess, receipt, error, reset }
+}
+
+// ─── useRelayDeposit ──────────────────────────────────────────────────────────
+/**
+ * 가스비 대납 에스크로 예치
+ * Returns { deposit, isPending, isConfirming, isSuccess, tradeId, error, reset }
+ */
+export function useRelayDeposit(chainId) {
+  const { relay, isPending, isConfirming, isSuccess, receipt, error, reset } = useRelayAction(chainId)
+
+  let tradeId = null
+  if (isSuccess && receipt) {
+    try {
+      const logs = parseEventLogs({ abi: ESCROW_ABI, logs: receipt.logs })
+      const ev   = logs.find(l => l.eventName === 'TradeDeposited')
+      if (ev) tradeId = ev.args.tradeId
+    } catch {}
+  }
+
+  const deposit = (buyer, amount) => relay('deposit', { buyer, amount })
+
+  return { deposit, isPending, isConfirming, isSuccess, tradeId, error, reset }
+}
+
+// ─── useRelayRelease ──────────────────────────────────────────────────────────
+export function useRelayRelease(chainId) {
+  const { relay, isPending, isConfirming, isSuccess, error } = useRelayAction(chainId)
+  const release = (tradeId) => relay('release', { tradeId })
+  return { release, isPending, isConfirming, isSuccess, error }
+}
+
+// ─── useRelayDispute ──────────────────────────────────────────────────────────
+export function useRelayDispute(chainId) {
+  const { relay, isPending, isConfirming, isSuccess, error } = useRelayAction(chainId)
+  const dispute = (tradeId) => relay('dispute', { tradeId })
+  return { dispute, isPending, isConfirming, isSuccess, error }
+}
+
+// ─── useRelayRefund ───────────────────────────────────────────────────────────
+export function useRelayRefund(chainId) {
+  const { relay, isPending, isConfirming, isSuccess, error } = useRelayAction(chainId)
+  const refund = (tradeId) => relay('refund', { tradeId })
+  return { refund, isPending, isConfirming, isSuccess, error }
+}
+
+// ─── useEthBalance + useRequestDrip ──────────────────────────────────────────
+/**
+ * 사용자의 ETH 잔액 조회.
+ * 잔액이 적으면 드립 버튼을 표시하는 데 사용.
+ */
+export function useEthBalance() {
+  const { address } = useAccount()
+  const { data }    = useBalance({ address, query: { refetchInterval: 5000 } })
+  return data?.value ?? 0n
+}
+
+/**
+ * 최초 USDT approve용 ETH 드립 요청.
+ * Returns { requestDrip, isDripping, dripTxHash, dripError }
+ */
+export function useRequestDrip() {
+  const { address }               = useAccount()
+  const [isDripping,  setDrip]    = useState(false)
+  const [dripTxHash,  setTxHash]  = useState(null)
+  const [dripError,   setError]   = useState(null)
+
+  const requestDrip = async () => {
+    if (!address) return
+    setDrip(true)
+    setError(null)
+    try {
+      const { txHash } = await requestEthDrip(address)
+      setTxHash(txHash)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setDrip(false)
+    }
+  }
+
+  return { requestDrip, isDripping, dripTxHash, dripError }
 }

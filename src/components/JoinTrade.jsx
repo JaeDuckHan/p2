@@ -34,9 +34,9 @@ export default function JoinTrade({ onJoined }) {
     return (
       <div className="no-contract">
         <h2>네트워크 전환 필요</h2>
-        <p>이 앱은 <strong>Arbitrum Sepolia</strong> 테스트넷에서 동작합니다.</p>
-        <button className="btn" onClick={() => switchChain({ chainId: 421614 })}>
-          Arbitrum Sepolia로 전환
+        <p>이 앱은 <strong>Arbitrum One</strong> 메인넷에서 동작합니다.</p>
+        <button className="btn" onClick={() => switchChain({ chainId: 42161 })}>
+          Arbitrum One으로 전환
         </button>
       </div>
     )
