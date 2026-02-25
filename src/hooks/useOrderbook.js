@@ -126,6 +126,8 @@ export function useOrderbook({ enabled = true } = {}) {
         })
 
         room.onPeerJoin((peerId) => {
+          // 피어가 들어오면 재연결 타이머 취소 (중복 room 생성 방지)
+          clearTimeout(retryTimerRef.current)
           peersRef.current.add(peerId)
           setPeerCount(peersRef.current.size)
         })
@@ -134,7 +136,7 @@ export function useOrderbook({ enabled = true } = {}) {
           peersRef.current.delete(peerId)
           setPeerCount(peersRef.current.size)
 
-          // 모든 피어가 떠났을 때 재연결 시도
+          // 모든 피어가 떠났을 때만 재연결 시도
           if (peersRef.current.size === 0 && !cancelledRef.current) {
             scheduleReconnect()
           }
