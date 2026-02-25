@@ -30,16 +30,30 @@ export { getAvatarGradient, getAvatarChar }
 
 /**
  * OrderbookView — Main orderbook container with sell/buy tabs.
+ *
+ * @param {Object}   orderbook        - useOrderbook hook 반환값
+ * @param {function} onStartTrade     - 거래 시작 콜백
+ * @param {boolean}  [myOrdersOnly]   - true면 내 오더만 표시 (내 오더 탭)
  */
-export default function OrderbookView({ orderbook, onStartTrade }) {
+export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = false }) {
   const { address } = useAccount()
 
   const [tab, setTab] = useState('sell')
-  const [formMode, setFormMode] = useState(null)
+  const [formMode, setFormMode] = useState(null)   // null | 'sell-form' | 'buy-form'
+  const [editingOrder, setEditingOrder] = useState(null)  // 수정 중인 오더
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [selectingBuyerForOrder, setSelectingBuyerForOrder] = useState(null)
 
-  const orders = tab === 'sell' ? orderbook.sellOrders : orderbook.buyOrders
+  // 내 오더 탭: 모든 오더 중 내 것만, 일반 탭: 현재 탭 오더
+  const allMyOrders = [
+    ...orderbook.sellOrders.filter(o => o.seller?.toLowerCase() === address?.toLowerCase()),
+    ...orderbook.buyOrders.filter(o => o.buyer?.toLowerCase() === address?.toLowerCase()),
+  ]
+  const orders = myOrdersOnly
+    ? (tab === 'sell'
+        ? orderbook.sellOrders.filter(o => o.seller?.toLowerCase() === address?.toLowerCase())
+        : orderbook.buyOrders.filter(o => o.buyer?.toLowerCase() === address?.toLowerCase()))
+    : (tab === 'sell' ? orderbook.sellOrders : orderbook.buyOrders)
 
   const myAcceptRequests = orderbook.acceptRequests.filter(r => {
     const order = orderbook.sellOrders.find(o => o.id === r.orderId)
@@ -95,15 +109,20 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
     return (
       <div className="fade-in">
         <div className="app-bar">
-          <button className="app-bar-back" onClick={() => setFormMode(null)}>←</button>
-          <div className="app-bar-title">📤 판매 오더 올리기</div>
+          <button className="app-bar-back" onClick={() => { setFormMode(null); setEditingOrder(null) }}>←</button>
+          <div className="app-bar-title">{editingOrder ? '✏️ 판매 오더 수정' : '📤 판매 오더 올리기'}</div>
           <div style={{ width: 32 }} />
         </div>
         <div className="pad">
           <SellOrderForm
+            initialValues={editingOrder}
             onCreated={(order) => {
+              if (editingOrder) {
+                orderbook.cancelOrder(editingOrder.id)  // 기존 오더 취소
+              }
               orderbook.postSellOrder(order)
               setFormMode(null)
+              setEditingOrder(null)
             }}
           />
         </div>
@@ -115,15 +134,20 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
     return (
       <div className="fade-in">
         <div className="app-bar">
-          <button className="app-bar-back" onClick={() => setFormMode(null)}>←</button>
-          <div className="app-bar-title">📥 구매 오더 올리기</div>
+          <button className="app-bar-back" onClick={() => { setFormMode(null); setEditingOrder(null) }}>←</button>
+          <div className="app-bar-title">{editingOrder ? '✏️ 구매 오더 수정' : '📥 구매 오더 올리기'}</div>
           <div style={{ width: 32 }} />
         </div>
         <div className="pad">
           <BuyOrderForm
+            initialValues={editingOrder}
             onCreated={(order) => {
+              if (editingOrder) {
+                orderbook.cancelOrder(editingOrder.id)  // 기존 오더 취소
+              }
               orderbook.postBuyOrder(order)
               setFormMode(null)
+              setEditingOrder(null)
             }}
           />
         </div>
@@ -155,6 +179,15 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
             n => n.orderId === selectedOrder.id
           )}
           onStartTrade={onStartTrade}
+          onCancelOrder={(orderId) => {
+            orderbook.cancelOrder(orderId)
+            setSelectedOrder(null)
+          }}
+          onEditOrder={(order) => {
+            setEditingOrder(order)
+            setFormMode(order.type === 'SELL' ? 'sell-form' : 'buy-form')
+            setSelectedOrder(null)
+          }}
         />
       </div>
     )
@@ -203,7 +236,7 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
       {/* Page header */}
       <div className="page-header">
         <div>
-          <div className="page-title">거래소</div>
+          <div className="page-title">{myOrdersOnly ? '내 오더' : '거래소'}</div>
           <div className="page-subtitle">
             <span className="p2p-dot on" />
             P2P · {orderbook.connected ? `${orderbook.peerCount}명 접속` : '연결 중...'}
@@ -363,12 +396,39 @@ export default function OrderbookView({ orderbook, onStartTrade }) {
                   <div className="oc-meta">
                     <span>⏱ {formatExpiry(order.expiry)}</span>
                   </div>
-                  <button
-                    className={`btn btn-sm ${isSell ? 'btn-blue' : 'btn-amber'}`}
-                    onClick={(e) => { e.stopPropagation(); handleOrderClick(order) }}
-                  >
-                    {isSell ? '구매하기' : '판매하기'}
-                  </button>
+                  {isOwn ? (
+                    <div style={{ display: 'flex', gap: 5 }}>
+                      <button
+                        className="btn btn-sm btn-ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingOrder(order)
+                          setFormMode(order.type === 'SELL' ? 'sell-form' : 'buy-form')
+                        }}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="btn btn-sm btn-ghost"
+                        style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (window.confirm('이 오더를 취소하시겠습니까?')) {
+                            orderbook.cancelOrder(order.id)
+                          }
+                        }}
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className={`btn btn-sm ${isSell ? 'btn-blue' : 'btn-amber'}`}
+                      onClick={(e) => { e.stopPropagation(); handleOrderClick(order) }}
+                    >
+                      {isSell ? '구매하기' : '판매하기'}
+                    </button>
+                  )}
                 </div>
               </div>
             )

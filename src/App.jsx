@@ -14,7 +14,7 @@ export default function App() {
   // null | { tradeId, role }
   const [activeTrade, setActiveTrade] = useState(null)
 
-  // 'orderbook' | 'direct'
+  // 'orderbook' | 'direct' | 'my-orders'
   const [page, setPage] = useState('orderbook')
 
   // 'sell' | 'buy' (for direct trade mode)
@@ -126,7 +126,7 @@ export default function App() {
           {/* Top-level tabs: 오더북 | 직접거래 */}
           <div className="page-tabs">
             <button
-              className={`page-tab ${page === 'orderbook' ? 'active' : ''}`}
+              className={`page-tab ${page === 'orderbook' || page === 'my-orders' ? 'active' : ''}`}
               onClick={() => setPage('orderbook')}
             >
               오더북
@@ -140,9 +140,13 @@ export default function App() {
           </div>
 
           <div className="main-content">
-            {page === 'orderbook' ? (
-              /* ── Orderbook view ───────────────────────── */
-              <OrderbookView orderbook={orderbook} onStartTrade={handleStartTrade} />
+            {page === 'orderbook' || page === 'my-orders' ? (
+              /* ── Orderbook / 내 오더 view ─────────────── */
+              <OrderbookView
+                orderbook={orderbook}
+                onStartTrade={handleStartTrade}
+                myOrdersOnly={page === 'my-orders'}
+              />
 
             ) : (
               /* ── Direct trade (original) ──────────────── */
@@ -224,11 +228,14 @@ export default function App() {
               <span className="bnav-icon">📊</span>
               <span className="bnav-label">거래소</span>
             </button>
-            <button className="bnav-item" onClick={() => { setPage('orderbook'); /* TODO: filter to my orders */ }}>
+            <button
+              className={`bnav-item ${page === 'my-orders' ? 'active' : ''}`}
+              onClick={() => setPage('my-orders')}
+            >
               <span className="bnav-icon">📋</span>
               <span className="bnav-label">내 오더</span>
             </button>
-            <button className="bnav-item" onClick={() => { setPage('direct'); /* TODO: trade history */ }}>
+            <button className="bnav-item" onClick={() => setPage('direct')}>
               <span className="bnav-icon">🕐</span>
               <span className="bnav-label">내역</span>
             </button>
