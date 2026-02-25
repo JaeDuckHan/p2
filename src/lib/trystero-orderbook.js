@@ -11,7 +11,7 @@
 // NOTE: accept-req / accept-res are now handled via XMTP DM (see useOrderbook.js)
 //
 // v2 개선:
-//   - 릴레이 3개 → 6개 후보 + 접속 전 헬스체크
+//   - Trystero 내장 릴레이 사용 (appId 기반 deterministic 선택)
 //   - 고정 2초 sync 딜레이 제거 → 피어 join 시 즉시 sync 요청
 //   - onPeerJoin/Leave를 내부에서 관리하여 콜백 충돌 방지
 
@@ -20,71 +20,6 @@ import { verifyOrder } from './signature.js'
 import { putOrder, getAllOrders, deleteExpiredOrders } from './indexeddb.js'
 
 const ORDERBOOK_APP_ID = 'miniswap-orderbook-v1'
-
-// 릴레이 후보 6개 — 헬스체크 후 살아있는 것만 사용
-const NOSTR_RELAYS_CANDIDATES = [
-  'wss://relay.damus.io',
-  'wss://nos.lol',
-  'wss://relay.nostr.band',
-  'wss://relay.snort.social',
-  'wss://nostr.wine',
-  'wss://relay.primal.net',
-]
-
-const MIN_HEALTHY_RELAYS = 3    // 이 수 미만이면 전체 후보를 폴백으로 사용
-const RELAY_CHECK_TIMEOUT = 4000 // ms — 릴레이 응답 대기 최대 시간
-
-/**
- * WebSocket ping으로 릴레이 생존 여부 확인.
- * @param {string} url
- * @returns {Promise<boolean>}
- */
-async function checkRelay(url) {
-  return new Promise((resolve) => {
-    try {
-      const ws = new WebSocket(url)
-      const timer = setTimeout(() => {
-        ws.close()
-        resolve(false)
-      }, RELAY_CHECK_TIMEOUT)
-      ws.onopen = () => {
-        clearTimeout(timer)
-        ws.close()
-        resolve(true)
-      }
-      ws.onerror = () => {
-        clearTimeout(timer)
-        resolve(false)
-      }
-    } catch {
-      resolve(false)
-    }
-  })
-}
-
-/**
- * 후보 릴레이 중 응답하는 릴레이만 반환.
- * 건강한 릴레이가 MIN_HEALTHY_RELAYS 미만이면 전체 후보 폴백.
- *
- * @param {string[]} [candidates]
- * @returns {Promise<string[]>}
- */
-export async function getHealthyRelays(candidates = NOSTR_RELAYS_CANDIDATES) {
-  const results = await Promise.allSettled(
-    candidates.map(async (url) => ({ url, ok: await checkRelay(url) }))
-  )
-  const healthy = results
-    .filter(r => r.status === 'fulfilled' && r.value.ok)
-    .map(r => r.value.url)
-
-  if (healthy.length >= MIN_HEALTHY_RELAYS) {
-    console.info(`[orderbook] 헬스체크 완료 — ${healthy.length}/${candidates.length} 릴레이 정상`, healthy)
-    return healthy
-  }
-
-  console.warn(`[orderbook] 건강한 릴레이 부족(${healthy.length}개) — 전체 후보 폴백`)
-  return candidates
-}
 
 /**
  * @typedef {Object} OrderbookRoom
@@ -103,8 +38,7 @@ export async function getHealthyRelays(candidates = NOSTR_RELAYS_CANDIDATES) {
  *
  * @param {Object}   [options]
  * @param {string}   [options.appId]           - Override app ID (테스트용)
- * @param {string[]} [options.relays]          - Override relay list (헬스체크 건너뜀)
- * @param {boolean}  [options.skipHealthCheck] - true면 헬스체크 생략
+ * @param {string[]} [options.relays]          - Override relay list
  * @returns {Promise<OrderbookRoom>}
  */
 export async function createOrderbookRoom(options = {}) {
@@ -112,17 +46,13 @@ export async function createOrderbookRoom(options = {}) {
 
   const appId = options.appId || ORDERBOOK_APP_ID
 
-  // 헬스체크: 릴레이 override가 없을 때만 실행
-  const relays = options.relays
-    ? options.relays
-    : options.skipHealthCheck
-      ? NOSTR_RELAYS_CANDIDATES
-      : await getHealthyRelays()
+  // Trystero 내장 릴레이 사용 (appId 기반 deterministic 선택)
+  // 모든 유저가 같은 appId → 같은 릴레이 5개 → 서로 발견 가능
+  const config = options.relays
+    ? { appId, relayUrls: options.relays }
+    : { appId }
 
-  const room = joinRoom(
-    { appId, relayUrls: relays },
-    'orderbook'
-  )
+  const room = joinRoom(config, 'orderbook')
 
   // ── Create channels ──────────────────────────────────────────────────────
 
