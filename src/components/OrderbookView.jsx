@@ -243,7 +243,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
               !orderbook.connected
                 ? '연결 중...'
                 : orderbook.peerCount === 0
-                  ? '대기 중 (나만 접속)'
+                  ? '접속 중'
                   : `${orderbook.peerCount + 1}명 접속`
             }
           </div>
