@@ -239,7 +239,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
           <div className="page-title">{myOrdersOnly ? '내 오더' : '거래소'}</div>
           <div className="page-subtitle">
             <span className="p2p-dot on" />
-            P2P · {orderbook.connected ? `${orderbook.peerCount}명 접속` : '연결 중...'}
+            P2P · {orderbook.connected ? `${orderbook.peerCount + 1}명 접속` : '연결 중...'}
           </div>
         </div>
         <div className="page-actions">
