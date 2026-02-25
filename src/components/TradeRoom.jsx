@@ -3,9 +3,9 @@ import { useAccount } from 'wagmi'
 import {
   useGetTrade,
   useIsRefundable,
-  useRelease,
-  useRefund,
-  useDispute,
+  useRelayRelease,
+  useRelayRefund,
+  useRelayDispute,
   formatUsdt,
 } from '../hooks/useEscrow'
 import { useXmtpChat } from '../hooks/useXmtpChat'
@@ -110,9 +110,9 @@ export default function TradeRoom({ tradeId, initialRole, onExit }) {
   const { trade, isLoading, refetch } = useGetTrade(tradeId)
   const isRefundable = useIsRefundable(tradeId, chainId)
 
-  const { release, isPending: relPending, isConfirming: relConfirming, isSuccess: relSuccess, error: relErr } = useRelease(chainId)
-  const { refund,  isPending: refPending, isConfirming: refConfirming, isSuccess: refSuccess, error: refErr } = useRefund(chainId)
-  const { dispute, isPending: disPending, isConfirming: disConfirming, isSuccess: disSuccess, error: disErr } = useDispute(chainId)
+  const { release, isPending: relPending, isConfirming: relConfirming, isSuccess: relSuccess, error: relErr } = useRelayRelease(chainId)
+  const { refund,  isPending: refPending, isConfirming: refConfirming, isSuccess: refSuccess, error: refErr } = useRelayRefund(chainId)
+  const { dispute, isPending: disPending, isConfirming: disConfirming, isSuccess: disSuccess, error: disErr } = useRelayDispute(chainId)
 
   const { isReady: xmtpReady } = useXmtp()
   const peerAddress = trade

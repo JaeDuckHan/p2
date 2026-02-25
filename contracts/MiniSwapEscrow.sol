@@ -82,11 +82,33 @@ contract MiniSwapEscrow {
     address public admin1;
     address public admin2;
 
+    /// @notice 가스비 대납 릴레이어 주소 (배포자 지갑)
+    address public relayer;
+
     /// @notice tradeId 생성용 nonce (재생 공격 방지)
     uint256 private _nonce;
 
     /// @notice Reentrancy Guard 잠금 (1 = 해제, 2 = 잠금)
     uint256 private _locked = 1;
+
+    // ══════════════════════════════════════════════════════════════
+    //  EIP-712 메타-트랜잭션 (가스비 대납)
+    // ══════════════════════════════════════════════════════════════
+
+    /// @notice EIP-712 도메인 구분자 (배포 시 고정)
+    bytes32 public immutable DOMAIN_SEPARATOR;
+
+    bytes32 private constant DEPOSIT_TYPEHASH =
+        keccak256("DepositFor(address seller,address buyer,uint256 amount,uint256 nonce,uint256 deadline)");
+    bytes32 private constant RELEASE_TYPEHASH =
+        keccak256("ReleaseFor(address actor,bytes32 tradeId,uint256 nonce,uint256 deadline)");
+    bytes32 private constant DISPUTE_TYPEHASH =
+        keccak256("DisputeFor(address actor,bytes32 tradeId,uint256 nonce,uint256 deadline)");
+    bytes32 private constant REFUND_TYPEHASH =
+        keccak256("RefundFor(address actor,bytes32 tradeId,uint256 nonce,uint256 deadline)");
+
+    /// @notice 메타-트랜잭션 리플레이 방지 nonce
+    mapping(address => uint256) public metaNonces;
 
     // ══════════════════════════════════════════════════════════════
     //  타입 정의
@@ -197,6 +219,9 @@ contract MiniSwapEscrow {
     error VoteMismatch();          // 두 어드민의 판정이 불일치
     error InvalidSlot();           // slot이 1 또는 2가 아님
     error TransferFailed();        // ERC-20 transfer 실패
+    error DeadlineExpired();       // 메타-트랜잭션 deadline 초과
+    error InvalidSignature();      // 서명 검증 실패
+    error NotRelayer();            // msg.sender가 relayer가 아님
 
     // ══════════════════════════════════════════════════════════════
     //  Modifier
@@ -228,17 +253,28 @@ contract MiniSwapEscrow {
         address _usdt,
         address _feeRecipient,
         address _admin1,
-        address _admin2
+        address _admin2,
+        address _relayer
     ) {
         if (_usdt         == address(0)) revert ZeroAddress();
         if (_feeRecipient == address(0)) revert ZeroAddress();
         if (_admin1       == address(0)) revert ZeroAddress();
         if (_admin2       == address(0)) revert ZeroAddress();
+        if (_relayer      == address(0)) revert ZeroAddress();
 
         usdt         = IERC20(_usdt);
         feeRecipient = _feeRecipient;
         admin1       = _admin1;
         admin2       = _admin2;
+        relayer      = _relayer;
+
+        DOMAIN_SEPARATOR = keccak256(abi.encode(
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+            keccak256(bytes("MiniSwapEscrow")),
+            keccak256(bytes("1")),
+            block.chainid,
+            address(this)
+        ));
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -506,6 +542,154 @@ contract MiniSwapEscrow {
     }
 
     // ══════════════════════════════════════════════════════════════
+    //  ⑦~⑩ 가스비 대납 메타-트랜잭션 함수 (relayer 전용)
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * @notice [릴레이어 호출] 판매자 서명으로 에스크로 예치
+     * @dev   판매자는 MetaMask로 EIP-712 서명만 — 가스비는 릴레이어가 대납
+     *        판매자는 사전에 usdt.approve(escrow, amount+fee) 필요 (1회 ETH 필요)
+     */
+    function depositFor(
+        address seller,
+        address buyer,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline,
+        bytes calldata sig
+    ) external nonReentrant returns (bytes32 tradeId) {
+        if (msg.sender != relayer)      revert NotRelayer();
+        if (block.timestamp > deadline) revert DeadlineExpired();
+
+        _verifyAndConsumeNonce(seller, nonce, keccak256(abi.encode(
+            DEPOSIT_TYPEHASH, seller, buyer, amount, nonce, deadline
+        )), sig);
+
+        if (buyer  == address(0))          revert ZeroAddress();
+        if (buyer  == seller)              revert SelfTrade();
+        if (amount == 0)                   revert ZeroAmount();
+        if (amount >  type(uint128).max)   revert AmountOverflow();
+
+        uint256 fee   = (amount * FEE_RATE_BPS) / BPS_DENOMINATOR;
+        uint256 total = amount + fee;
+
+        unchecked {
+            tradeId = keccak256(abi.encodePacked(
+                seller, buyer, amount, _nonce++, block.timestamp
+            ));
+        }
+
+        trades[tradeId] = Trade({
+            seller    : seller,
+            status    : TradeStatus.LOCKED,
+            createdAt : uint64(block.timestamp),
+            buyer     : buyer,
+            expiresAt : uint64(block.timestamp + TRADE_EXPIRY),
+            amount    : uint128(amount),
+            feeAmount : uint128(fee)
+        });
+
+        _transferFrom(seller, address(this), total);
+
+        emit TradeDeposited(
+            tradeId, seller, buyer,
+            uint128(amount), uint128(fee),
+            uint64(block.timestamp + TRADE_EXPIRY)
+        );
+    }
+
+    /**
+     * @notice [릴레이어 호출] 판매자 서명으로 USDT 릴리즈 (가스비 대납)
+     */
+    function releaseFor(
+        address actor,
+        bytes32 tradeId,
+        uint256 nonce,
+        uint256 deadline,
+        bytes calldata sig
+    ) external nonReentrant {
+        if (msg.sender != relayer)      revert NotRelayer();
+        if (block.timestamp > deadline) revert DeadlineExpired();
+
+        _verifyAndConsumeNonce(actor, nonce, keccak256(abi.encode(
+            RELEASE_TYPEHASH, actor, tradeId, nonce, deadline
+        )), sig);
+
+        Trade storage t = _requireTrade(tradeId);
+        if (actor != t.seller)              revert Unauthorized();
+        if (t.status != TradeStatus.LOCKED) revert NotLocked();
+
+        uint128 amt    = t.amount;
+        uint128 fee    = t.feeAmount;
+        address buyer_ = t.buyer;
+
+        t.status = TradeStatus.RELEASED;
+
+        _transfer(buyer_,       amt);
+        _transfer(feeRecipient, fee);
+
+        emit TradeReleased(tradeId, buyer_, amt);
+    }
+
+    /**
+     * @notice [릴레이어 호출] 서명으로 분쟁 신청 (가스비 대납)
+     */
+    function disputeFor(
+        address actor,
+        bytes32 tradeId,
+        uint256 nonce,
+        uint256 deadline,
+        bytes calldata sig
+    ) external {
+        if (msg.sender != relayer)      revert NotRelayer();
+        if (block.timestamp > deadline) revert DeadlineExpired();
+
+        _verifyAndConsumeNonce(actor, nonce, keccak256(abi.encode(
+            DISPUTE_TYPEHASH, actor, tradeId, nonce, deadline
+        )), sig);
+
+        Trade storage t = _requireTrade(tradeId);
+        if (actor != t.seller && actor != t.buyer) revert Unauthorized();
+        if (t.status != TradeStatus.LOCKED)         revert NotLocked();
+
+        t.status = TradeStatus.DISPUTED;
+
+        emit TradeDisputed(tradeId, actor);
+    }
+
+    /**
+     * @notice [릴레이어 호출] 서명으로 7일 타임아웃 환불 (가스비 대납)
+     */
+    function refundFor(
+        address actor,
+        bytes32 tradeId,
+        uint256 nonce,
+        uint256 deadline,
+        bytes calldata sig
+    ) external nonReentrant {
+        if (msg.sender != relayer)      revert NotRelayer();
+        if (block.timestamp > deadline) revert DeadlineExpired();
+
+        _verifyAndConsumeNonce(actor, nonce, keccak256(abi.encode(
+            REFUND_TYPEHASH, actor, tradeId, nonce, deadline
+        )), sig);
+
+        Trade storage t = _requireTrade(tradeId);
+        if (actor != t.seller && actor != t.buyer) revert Unauthorized();
+        if (t.status  != TradeStatus.LOCKED)        revert NotLocked();
+        if (block.timestamp < t.expiresAt)          revert NotExpiredYet();
+
+        uint128 total  = uint128(uint256(t.amount) + uint256(t.feeAmount));
+        address seller = t.seller;
+
+        t.status = TradeStatus.REFUNDED;
+
+        _transfer(seller, total);
+
+        emit TradeRefunded(tradeId, seller, total);
+    }
+
+    // ══════════════════════════════════════════════════════════════
     //  관리자 함수
     // ══════════════════════════════════════════════════════════════
 
@@ -530,6 +714,16 @@ contract MiniSwapEscrow {
             emit AdminChanged(2, admin2, newAdmin);
             admin2 = newAdmin;
         }
+    }
+
+    /**
+     * @notice 릴레이어 지갑 교체 (어드민 1명이라도 호출 가능)
+     * @param newRelayer 새 릴레이어 주소
+     */
+    function changeRelayer(address newRelayer) external {
+        if (msg.sender != admin1 && msg.sender != admin2) revert Unauthorized();
+        if (newRelayer == address(0)) revert ZeroAddress();
+        relayer = newRelayer;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -653,5 +847,42 @@ contract MiniSwapEscrow {
     function _transfer(address to, uint256 amount) private {
         bool ok = usdt.transfer(to, amount);
         if (!ok) revert TransferFailed();
+    }
+
+    /**
+     * @dev EIP-712 서명 검증 및 nonce 소모
+     *      nonce 불일치 또는 서명 오류 시 InvalidSignature revert
+     */
+    function _verifyAndConsumeNonce(
+        address signer,
+        uint256 nonce,
+        bytes32 structHash,
+        bytes calldata sig
+    ) private {
+        if (metaNonces[signer] != nonce) revert InvalidSignature();
+        metaNonces[signer] = nonce + 1;
+
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
+        address recovered = _ecrecover(digest, sig);
+        if (recovered != signer) revert InvalidSignature();
+    }
+
+    /**
+     * @dev ECDSA ecrecover 헬퍼 — sig는 반드시 65바이트
+     */
+    function _ecrecover(bytes32 digest, bytes calldata sig) private pure returns (address) {
+        if (sig.length != 65) revert InvalidSignature();
+        bytes32 r;
+        bytes32 s;
+        uint8   v;
+        assembly {
+            r := calldataload(sig.offset)
+            s := calldataload(add(sig.offset, 32))
+            v := byte(0, calldataload(add(sig.offset, 64)))
+        }
+        if (v < 27) v += 27;
+        address addr = ecrecover(digest, v, r, s);
+        if (addr == address(0)) revert InvalidSignature();
+        return addr;
     }
 }

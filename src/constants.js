@@ -25,6 +25,57 @@ export const ESCROW_ABI = [
     inputs:  [{ name: 'tradeId', type: 'bytes32' }],
     outputs: [],
   },
+  // ── 가스비 대납 메타-트랜잭션 함수 ────────────────────────────
+  {
+    type: 'function', name: 'depositFor', stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'seller',   type: 'address' },
+      { name: 'buyer',    type: 'address' },
+      { name: 'amount',   type: 'uint256' },
+      { name: 'nonce',    type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+      { name: 'sig',      type: 'bytes'   },
+    ],
+    outputs: [{ name: 'tradeId', type: 'bytes32' }],
+  },
+  {
+    type: 'function', name: 'releaseFor', stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'actor',    type: 'address' },
+      { name: 'tradeId',  type: 'bytes32' },
+      { name: 'nonce',    type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+      { name: 'sig',      type: 'bytes'   },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function', name: 'disputeFor', stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'actor',    type: 'address' },
+      { name: 'tradeId',  type: 'bytes32' },
+      { name: 'nonce',    type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+      { name: 'sig',      type: 'bytes'   },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function', name: 'refundFor', stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'actor',    type: 'address' },
+      { name: 'tradeId',  type: 'bytes32' },
+      { name: 'nonce',    type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+      { name: 'sig',      type: 'bytes'   },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function', name: 'metaNonces', stateMutability: 'view',
+    inputs:  [{ name: 'owner', type: 'address' }],
+    outputs: [{ type: 'uint256' }],
+  },
   // ── View functions ─────────────────────────────────────────────
   {
     type: 'function', name: 'getTrade', stateMutability: 'view',
