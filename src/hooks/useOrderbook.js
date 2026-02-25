@@ -54,6 +54,7 @@ export function useOrderbook({ enabled = true } = {}) {
   const [acceptResponses,   setAcceptResponses]   = useState([])
   const [tradeNotifications, setTradeNotifications] = useState([])
   const [peerCount,         setPeerCount]         = useState(0)
+  const [roomReady,         setRoomReady]         = useState(false)
 
   const { client: xmtpClient, isReady: xmtpReady } = useXmtp()
 
@@ -103,6 +104,7 @@ export function useOrderbook({ enabled = true } = {}) {
 
         roomRef.current = room
         retryDelayRef.current = RECONNECT_BASE_MS  // 성공 시 딜레이 리셋
+        setRoomReady(true)  // 룸 연결 성공
 
         room.onSellOrder((order) => {
           setSellOrders(prev => {
@@ -154,6 +156,8 @@ export function useOrderbook({ enabled = true } = {}) {
       const delay = retryDelayRef.current
       retryDelayRef.current = nextDelay(delay)
 
+      setRoomReady(false)  // 재연결 대기 중 → 연결 중 표시
+
       retryTimerRef.current = setTimeout(() => {
         if (cancelledRef.current) return
         if (roomRef.current) {
@@ -177,6 +181,7 @@ export function useOrderbook({ enabled = true } = {}) {
       }
       peersRef.current.clear()
       setPeerCount(0)
+      setRoomReady(false)
     }
   }, [enabled])
 
@@ -477,7 +482,7 @@ export function useOrderbook({ enabled = true } = {}) {
     acceptResponses,
     tradeNotifications,
     peerCount,
-    connected: peerCount > 0,
+    connected: roomReady,
     postSellOrder,
     postBuyOrder,
     requestAccept,
