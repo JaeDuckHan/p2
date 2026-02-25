@@ -4,10 +4,23 @@
 // Supports offline message delivery — messages are stored by XMTP network nodes.
 //
 // Interface: same as useP2P — { peers, messages, send, connected }
+//
+// v2 개선:
+//   - 스트림 에러 시 자동 재시작 + 지수 백오프 (최대 60초)
+//   - 하트비트: 30초마다 conversation.sync() 로 스트림 생존 확인
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { IdentifierKind, SortDirection, GroupMessageKind } from '@xmtp/browser-sdk'
 import { useXmtp } from '../contexts/XmtpContext'
+
+const RECONNECT_BASE_MS  = 2_000
+const RECONNECT_MAX_MS   = 60_000
+const RECONNECT_FACTOR   = 2
+const CHAT_HEARTBEAT_MS  = 30_000  // 30초마다 스트림 생존 확인
+
+function nextDelay(current) {
+  return Math.min(current * RECONNECT_FACTOR, RECONNECT_MAX_MS)
+}
 
 /**
  * XMTP-based trade chat hook.
@@ -23,18 +36,28 @@ export function useXmtpChat(peerAddress, tradeId, enabled = true) {
   const [connected, setConnected] = useState(false)
 
   const conversationRef = useRef(null)
-  const streamRef = useRef(null)
+  const streamRef       = useRef(null)
+  const retryDelayRef   = useRef(RECONNECT_BASE_MS)
 
-  // ── Initialize conversation & load history ──────────────────────────────
+  // ── Initialize conversation & load history — 자동 재시작 + 하트비트 ──────
 
   useEffect(() => {
     if (!isReady || !client || !peerAddress || !tradeId || !enabled) return
 
-    let cancelled = false
+    let cancelled      = false
+    let heartbeatTimer = null
+    let retryTimer     = null
 
     async function init() {
+      if (cancelled) return
+
+      // 이전 스트림 정리
+      if (streamRef.current) {
+        try { streamRef.current.end() } catch {}
+        streamRef.current = null
+      }
+
       try {
-        // Create or get existing DM with peer
         const conversation = await client.conversations.createDmWithIdentifier({
           identifier: peerAddress.toLowerCase(),
           identifierKind: IdentifierKind.Ethereum,
@@ -42,11 +65,9 @@ export function useXmtpChat(peerAddress, tradeId, enabled = true) {
         if (cancelled) return
         conversationRef.current = conversation
 
-        // Sync to get latest messages from network
         await conversation.sync()
         if (cancelled) return
 
-        // Load existing messages and filter by tradeId
         const existing = await conversation.messages({
           direction: SortDirection.Ascending,
         })
@@ -70,8 +91,8 @@ export function useXmtpChat(peerAddress, tradeId, enabled = true) {
 
         setMessages(parsed)
         setConnected(true)
+        retryDelayRef.current = RECONNECT_BASE_MS  // 성공 시 리셋
 
-        // Stream new incoming messages
         const stream = await conversation.stream()
         if (cancelled) {
           stream.end()
@@ -79,39 +100,59 @@ export function useXmtpChat(peerAddress, tradeId, enabled = true) {
         }
         streamRef.current = stream
 
+        // ── 하트비트: 30초마다 conversation.sync() 로 스트림 생존 확인 ──
+        heartbeatTimer = setInterval(async () => {
+          if (cancelled) return
+          try {
+            await conversation.sync()
+          } catch (err) {
+            console.warn('[useXmtpChat] 하트비트 실패, 스트림 재시작:', err)
+            clearInterval(heartbeatTimer)
+            setConnected(false)
+            scheduleRestart()
+          }
+        }, CHAT_HEARTBEAT_MS)
+
         for await (const msg of stream) {
           if (cancelled) break
           if (msg.kind !== GroupMessageKind.Application) continue
-          if (msg.senderInboxId === client.inboxId) continue // skip own
+          if (msg.senderInboxId === client.inboxId) continue
           try {
             const data = JSON.parse(msg.content)
             if (data.tradeId !== tradeId) continue
             setMessages((prev) => {
               if (prev.some((m) => m.id === data.id)) return prev
-              return [
-                ...prev,
-                {
-                  ...data,
-                  id: data.id || msg.id,
-                  fromMe: false,
-                },
-              ]
+              return [...prev, { ...data, id: data.id || msg.id, fromMe: false }]
             })
           } catch {
             // Skip non-JSON
           }
         }
+
       } catch (err) {
-        console.warn('[useXmtpChat] init failed:', err)
+        if (cancelled) return
+        console.warn(`[useXmtpChat] 초기화 실패, ${retryDelayRef.current / 1000}초 후 재시도:`, err)
+        setConnected(false)
+        clearInterval(heartbeatTimer)
+        scheduleRestart()
       }
+    }
+
+    function scheduleRestart() {
+      if (cancelled) return
+      const delay = retryDelayRef.current
+      retryDelayRef.current = nextDelay(delay)
+      retryTimer = setTimeout(() => init(), delay)
     }
 
     init()
 
     return () => {
       cancelled = true
+      clearInterval(heartbeatTimer)
+      clearTimeout(retryTimer)
       if (streamRef.current) {
-        streamRef.current.end()
+        try { streamRef.current.end() } catch {}
         streamRef.current = null
       }
       conversationRef.current = null

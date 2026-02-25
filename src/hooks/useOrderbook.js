@@ -6,22 +6,40 @@
 //
 // Provides state: sellOrders, buyOrders, acceptRequests, peerCount, connected
 // Provides actions: postSellOrder, postBuyOrder, requestAccept, respondAccept
+//
+// v2 개선:
+//   - Trystero 자동 재연결 + 지수 백오프 (최대 60초)
+//   - XMTP 스트림 에러 시 자동 재시작
+//   - XMTP 하트비트: 30초마다 conversations.sync() 로 스트림 생존 확인
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createOrderbookRoom } from '../lib/trystero-orderbook.js'
 import { isOrderExpired } from '../types/order.js'
 import { verifyAcceptRequest } from '../lib/signature.js'
-import { deleteExpiredOrders, getAllOrders } from '../lib/indexeddb.js'
+import { deleteExpiredOrders, getAllOrders, deleteOrder } from '../lib/indexeddb.js'
 import { IdentifierKind, SortDirection, GroupMessageKind } from '@xmtp/browser-sdk'
 import { useXmtp } from '../contexts/XmtpContext.jsx'
 
 // Cleanup interval for expired orders (30 seconds)
 const CLEANUP_INTERVAL_MS = 30_000
 
+// 재연결 설정 (지수 백오프)
+const RECONNECT_BASE_MS = 2_000   // 첫 재시도 대기
+const RECONNECT_MAX_MS  = 60_000  // 최대 대기 (60초)
+const RECONNECT_FACTOR  = 2       // 배율
+
+// XMTP 하트비트 주기
+const XMTP_HEARTBEAT_MS = 30_000  // 30초마다 sync 확인
+
 // XMTP message envelope type prefix for accept messages
-const ACCEPT_REQ_TYPE = 'miniswap:accept-req'
-const ACCEPT_RES_TYPE = 'miniswap:accept-res'
+const ACCEPT_REQ_TYPE    = 'miniswap:accept-req'
+const ACCEPT_RES_TYPE    = 'miniswap:accept-res'
 const TRADE_CREATED_TYPE = 'miniswap:trade-created'
+
+/** 지수 백오프 다음 딜레이 계산 */
+function nextDelay(current) {
+  return Math.min(current * RECONNECT_FACTOR, RECONNECT_MAX_MS)
+}
 
 /**
  * React hook for the decentralized P2P orderbook.
@@ -39,10 +57,13 @@ export function useOrderbook({ enabled = true } = {}) {
 
   const { client: xmtpClient, isReady: xmtpReady } = useXmtp()
 
-  const roomRef       = useRef(null)
-  const peersRef      = useRef(new Set())
-  const sellOrdersRef = useRef(sellOrders)
-  const xmtpStreamRef = useRef(null)
+  const roomRef        = useRef(null)
+  const peersRef       = useRef(new Set())
+  const sellOrdersRef  = useRef(sellOrders)
+  const xmtpStreamRef  = useRef(null)
+  const retryDelayRef  = useRef(RECONNECT_BASE_MS)
+  const retryTimerRef  = useRef(null)
+  const cancelledRef   = useRef(false)
 
   // Keep ref in sync with state (for use in callbacks)
   useEffect(() => { sellOrdersRef.current = sellOrders }, [sellOrders])
@@ -63,50 +84,91 @@ export function useOrderbook({ enabled = true } = {}) {
       .catch(err => console.warn('[useOrderbook] Failed to load persisted orders:', err))
   }, [enabled])
 
-  // ── Connect to P2P orderbook room (Trystero — orders only) ──────────────
+  // ── Connect to P2P orderbook room — 자동 재연결 + 지수 백오프 ───────────
 
   useEffect(() => {
     if (!enabled) return
 
-    let cancelled = false
+    cancelledRef.current = false
 
-    createOrderbookRoom().then(room => {
-      if (cancelled) {
-        room.leave()
-        return
+    async function connect() {
+      if (cancelledRef.current) return
+
+      try {
+        const room = await createOrderbookRoom()
+        if (cancelledRef.current) {
+          room.leave()
+          return
+        }
+
+        roomRef.current = room
+        retryDelayRef.current = RECONNECT_BASE_MS  // 성공 시 딜레이 리셋
+
+        room.onSellOrder((order) => {
+          setSellOrders(prev => {
+            if (prev.some(o => o.id === order.id)) return prev
+            return [...prev, order]
+          })
+        })
+
+        room.onBuyOrder((order) => {
+          setBuyOrders(prev => {
+            if (prev.some(o => o.id === order.id)) return prev
+            return [...prev, order]
+          })
+        })
+
+        room.onCancelOrder((orderId) => {
+          setSellOrders(prev => prev.filter(o => o.id !== orderId))
+          setBuyOrders(prev  => prev.filter(o => o.id !== orderId))
+          setAcceptRequests(prev => prev.filter(r => r.orderId !== orderId))
+          deleteOrder(orderId).catch(() => {})
+        })
+
+        room.onPeerJoin((peerId) => {
+          peersRef.current.add(peerId)
+          setPeerCount(peersRef.current.size)
+        })
+
+        room.onPeerLeave((peerId) => {
+          peersRef.current.delete(peerId)
+          setPeerCount(peersRef.current.size)
+
+          // 모든 피어가 떠났을 때 재연결 시도
+          if (peersRef.current.size === 0 && !cancelledRef.current) {
+            scheduleReconnect()
+          }
+        })
+
+      } catch (err) {
+        if (cancelledRef.current) return
+        console.warn(`[useOrderbook] 연결 실패, ${retryDelayRef.current / 1000}초 후 재시도:`, err)
+        scheduleReconnect()
       }
+    }
 
-      roomRef.current = room
+    function scheduleReconnect() {
+      if (cancelledRef.current) return
+      const delay = retryDelayRef.current
+      retryDelayRef.current = nextDelay(delay)
 
-      room.onSellOrder((order) => {
-        setSellOrders(prev => {
-          if (prev.some(o => o.id === order.id)) return prev
-          return [...prev, order]
-        })
-      })
+      retryTimerRef.current = setTimeout(() => {
+        if (cancelledRef.current) return
+        if (roomRef.current) {
+          roomRef.current.leave()
+          roomRef.current = null
+        }
+        peersRef.current.clear()
+        setPeerCount(0)
+        connect()
+      }, delay)
+    }
 
-      room.onBuyOrder((order) => {
-        setBuyOrders(prev => {
-          if (prev.some(o => o.id === order.id)) return prev
-          return [...prev, order]
-        })
-      })
-
-      room.onPeerJoin((peerId) => {
-        peersRef.current.add(peerId)
-        setPeerCount(peersRef.current.size)
-      })
-
-      room.onPeerLeave((peerId) => {
-        peersRef.current.delete(peerId)
-        setPeerCount(peersRef.current.size)
-      })
-    }).catch(err => {
-      console.warn('[useOrderbook] Failed to connect:', err)
-    })
+    connect()
 
     return () => {
-      cancelled = true
+      cancelledRef.current = true
+      clearTimeout(retryTimerRef.current)
       if (roomRef.current) {
         roomRef.current.leave()
         roomRef.current = null
@@ -116,22 +178,31 @@ export function useOrderbook({ enabled = true } = {}) {
     }
   }, [enabled])
 
-  // ── Stream XMTP DMs for accept-req / accept-res ─────────────────────────
+  // ── Stream XMTP DMs — 에러 시 자동 재시작 + 하트비트 ────────────────────
 
   useEffect(() => {
     if (!enabled || !xmtpReady || !xmtpClient) return
 
-    let cancelled = false
+    let streamCancelled = false
+    let xmtpRetryDelay  = RECONNECT_BASE_MS
+    let xmtpRetryTimer  = null
+    let heartbeatTimer  = null
 
     async function startAcceptStream() {
-      try {
-        // Sync existing conversations to get any missed messages
-        await xmtpClient.conversations.sync()
-        if (cancelled) return
+      if (streamCancelled) return
 
-        // Load existing accept messages from DMs
+      // 이전 스트림 정리
+      if (xmtpStreamRef.current) {
+        try { xmtpStreamRef.current.end() } catch {}
+        xmtpStreamRef.current = null
+      }
+
+      try {
+        await xmtpClient.conversations.sync()
+        if (streamCancelled) return
+
         const dms = await xmtpClient.conversations.listDms()
-        if (cancelled) return
+        if (streamCancelled) return
 
         for (const dm of dms) {
           await dm.sync()
@@ -142,23 +213,46 @@ export function useOrderbook({ enabled = true } = {}) {
           }
         }
 
-        // Stream new DM messages
         const stream = await xmtpClient.conversations.streamAllDmMessages()
-        if (cancelled) {
+        if (streamCancelled) {
           stream.end()
           return
         }
         xmtpStreamRef.current = stream
+        xmtpRetryDelay = RECONNECT_BASE_MS  // 성공 시 딜레이 리셋
+
+        // ── 하트비트: 30초마다 sync 로 스트림 생존 확인 ───────────────
+        heartbeatTimer = setInterval(async () => {
+          if (streamCancelled) return
+          try {
+            await xmtpClient.conversations.sync()
+          } catch (err) {
+            console.warn('[useOrderbook] XMTP 하트비트 실패, 스트림 재시작:', err)
+            clearInterval(heartbeatTimer)
+            scheduleXmtpRestart()
+          }
+        }, XMTP_HEARTBEAT_MS)
 
         for await (const msg of stream) {
-          if (cancelled) break
+          if (streamCancelled) break
           if (msg.kind !== GroupMessageKind.Application) continue
           if (msg.senderInboxId === xmtpClient.inboxId) continue
           handleAcceptMessage(msg)
         }
+
       } catch (err) {
-        console.warn('[useOrderbook] XMTP accept stream error:', err)
+        if (streamCancelled) return
+        console.warn(`[useOrderbook] XMTP 스트림 오류, ${xmtpRetryDelay / 1000}초 후 재시작:`, err)
+        clearInterval(heartbeatTimer)
+        scheduleXmtpRestart()
       }
+    }
+
+    function scheduleXmtpRestart() {
+      if (streamCancelled) return
+      const delay = xmtpRetryDelay
+      xmtpRetryDelay = nextDelay(delay)
+      xmtpRetryTimer = setTimeout(() => startAcceptStream(), delay)
     }
 
     function handleAcceptMessage(msg) {
@@ -167,7 +261,6 @@ export function useOrderbook({ enabled = true } = {}) {
 
         if (envelope.type === ACCEPT_REQ_TYPE) {
           const req = envelope.payload
-          // Validate accept request signature
           if (req.signature) {
             const check = verifyAcceptRequest(req.orderId, req.buyer, req.signature)
             if (!check.valid) {
@@ -204,9 +297,11 @@ export function useOrderbook({ enabled = true } = {}) {
     startAcceptStream()
 
     return () => {
-      cancelled = true
+      streamCancelled = true
+      clearTimeout(xmtpRetryTimer)
+      clearInterval(heartbeatTimer)
       if (xmtpStreamRef.current) {
-        xmtpStreamRef.current.end()
+        try { xmtpStreamRef.current.end() } catch {}
         xmtpStreamRef.current = null
       }
     }
@@ -339,6 +434,19 @@ export function useOrderbook({ enabled = true } = {}) {
   }, [])
 
   /**
+   * 내 오더 취소: 로컬 상태 제거 + IndexedDB 삭제 + 피어에게 취소 브로드캐스트
+   */
+  const cancelOrder = useCallback((orderId) => {
+    setSellOrders(prev => prev.filter(o => o.id !== orderId))
+    setBuyOrders(prev  => prev.filter(o => o.id !== orderId))
+    setAcceptRequests(prev => prev.filter(r => r.orderId !== orderId))
+    deleteOrder(orderId).catch(() => {})
+    if (roomRef.current) {
+      roomRef.current.broadcastCancelOrder(orderId)
+    }
+  }, [])
+
+  /**
    * Notify the buyer that the seller has created an escrow trade.
    * Sends tradeId via XMTP DM so buyer can auto-join the trade room.
    */
@@ -374,5 +482,6 @@ export function useOrderbook({ enabled = true } = {}) {
     respondAccept,
     notifyTradeCreated,
     removeOrder,
+    cancelOrder,
   }
 }

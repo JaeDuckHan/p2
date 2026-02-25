@@ -8,7 +8,7 @@ import { getUserProfile, renderStars } from '../mockData'
 /**
  * OrderDetail — Shows order info with accept button for buyers.
  */
-export default function OrderDetail({ order, onAcceptSent, onCancel, acceptResponse, tradeNotification, onStartTrade }) {
+export default function OrderDetail({ order, onAcceptSent, onCancel, acceptResponse, tradeNotification, onStartTrade, onCancelOrder, onEditOrder }) {
   const { address } = useAccount()
   const { data: walletClient } = useWalletClient()
 
@@ -197,12 +197,35 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
       {error && <div className="alert alert-error">{error}</div>}
 
       {isOwn ? (
-        <div className="banner banner-blue">
-          <span className="banner-icon">📋</span>
-          <div className="banner-body">
-            <div className="banner-text">내가 등록한 주문입니다. 수락 요청이 오면 알림이 표시됩니다.</div>
+        <>
+          <div className="banner banner-blue" style={{ marginBottom: 10 }}>
+            <span className="banner-icon">📋</span>
+            <div className="banner-body">
+              <div className="banner-text">내가 등록한 주문입니다. 수락 요청이 오면 알림이 표시됩니다.</div>
+            </div>
           </div>
-        </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-ghost"
+              style={{ flex: 1 }}
+              onClick={() => onEditOrder && onEditOrder(order)}
+            >
+              ✏️ 수정
+            </button>
+            <button
+              className="btn btn-ghost"
+              style={{ flex: 1, color: 'var(--red)', borderColor: 'var(--red)' }}
+              onClick={() => {
+                if (window.confirm('이 오더를 취소하시겠습니까?')) {
+                  onCancelOrder && onCancelOrder(order.id)
+                  onCancel && onCancel()
+                }
+              }}
+            >
+              🗑 취소
+            </button>
+          </div>
+        </>
       ) : sent ? (
         <div className="banner banner-green">
           <span className="banner-icon">✓</span>

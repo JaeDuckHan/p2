@@ -7,13 +7,18 @@ import { signOrder } from '../lib/signature'
 /**
  * BuyOrderForm — Buyer creates and signs a buy order.
  * Wireframe: S15 구매 오더 작성
+ *
+ * @param {function} onCreated       - 생성된 오더 콜백
+ * @param {Object}  [initialValues]  - 수정 모드: 기존 오더 값으로 폼 초기화
  */
-export default function BuyOrderForm({ onCreated }) {
+export default function BuyOrderForm({ onCreated, initialValues }) {
   const { address } = useAccount()
   const { data: walletClient } = useWalletClient()
 
-  const [amount, setAmount]       = useState('')
-  const [priceKRW, setPriceKRW]   = useState('1420')
+  const isEditMode = !!initialValues
+
+  const [amount, setAmount]       = useState(initialValues?.amount ? String(initialValues.amount) : '')
+  const [priceKRW, setPriceKRW]   = useState(initialValues?.priceKRW ? String(initialValues.priceKRW) : '1420')
   const [expiryMin, setExpiryMin] = useState('1440') // 24시간
   const [signing, setSigning]     = useState(false)
   const [error, setError]         = useState('')
@@ -191,10 +196,10 @@ export default function BuyOrderForm({ onCreated }) {
         type="submit"
         disabled={signing}
       >
-        {signing ? '서명 중…' : '구매 오더 올리기 →'}
+        {signing ? '서명 중…' : isEditMode ? '수정 오더 올리기 →' : '구매 오더 올리기 →'}
       </button>
       <div style={{ fontSize: 11, color: 'var(--snow3)', textAlign: 'center', padding: '5px 0' }}>
-        판매자 매칭 후 알림이 옵니다 · Gas 없음
+        {isEditMode ? '기존 오더는 자동 취소 후 새 오더로 교체됩니다' : '판매자 매칭 후 알림이 옵니다 · Gas 없음'}
       </div>
     </form>
   )
