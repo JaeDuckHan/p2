@@ -187,6 +187,21 @@ export async function getAllTrades() {
   return reqPromise(tx.objectStore(STORE_TRADES).getAll())
 }
 
+/**
+ * Get all trades where the given address is either seller or buyer.
+ * @param {string} address - The wallet address to filter by
+ * @returns {Promise<Object[]>}
+ */
+export async function getTradesByAddress(address) {
+  const db = await getDB()
+  const tx = db.transaction(STORE_TRADES, 'readonly')
+  const all = await reqPromise(tx.objectStore(STORE_TRADES).getAll())
+  const lower = address.toLowerCase()
+  return all.filter(t =>
+    t.seller?.toLowerCase() === lower || t.buyer?.toLowerCase() === lower
+  ).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+}
+
 // ─── Settings ────────────────────────────────────────────────────────────────
 
 /**

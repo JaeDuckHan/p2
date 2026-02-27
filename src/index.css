@@ -1,0 +1,112 @@
+/*
+ * index.css — 글로벌 스타일 시트
+ *
+ * Tailwind CSS v4 진입점 및 앱 전체 디자인 토큰 정의:
+ * - 폰트: Pretendard (한국어 최적화 sans-serif), JetBrains Mono (지갑 주소/ID용 monospace)
+ * - 색상 토큰: primary(인디고), success(에메랄드), warning(앰버), danger(레드), info(블루)
+ * - 앱 전용 색상: sell(앰버), buy(블루)
+ * - 애니메이션: fadeIn, slideDown, slideUp
+ */
+
+@import "tailwindcss";
+
+/* Pretendard — 한국어에 최적화된 가변 폰트 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+/* JetBrains Mono — 지갑 주소, 거래 ID 등 모노스페이스 표시용 */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@theme {
+  /* ── 타이포그래피 ─────────────────────────────── */
+  --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+  /* ── 주요 색상 (인디고) ──────────────────────── */
+  --color-primary-50:  #EEF2FF;
+  --color-primary-100: #E0E7FF;
+  --color-primary-200: #C7D2FE;
+  --color-primary-300: #A5B4FC;
+  --color-primary-400: #818CF8;
+  --color-primary-500: #6366F1;
+  --color-primary-600: #4F46E5;
+  --color-primary-700: #4338CA;
+  --color-primary-800: #3730A3;
+  --color-primary-900: #312E81;
+
+  /* ── 의미 색상 (success/warning/danger/info) ─── */
+  --color-success-light: #ECFDF5;
+  --color-success:       #10B981;
+  --color-success-dark:  #059669;
+
+  --color-warning-light: #FFFBEB;
+  --color-warning:       #F59E0B;
+  --color-warning-dark:  #D97706;
+
+  --color-danger-light:  #FEF2F2;
+  --color-danger:        #EF4444;
+  --color-danger-dark:   #DC2626;
+
+  --color-info-light:    #EFF6FF;
+  --color-info:          #3B82F6;
+  --color-info-dark:     #2563EB;
+
+  /* ── 앱 전용 색상 (판매/구매 구분) ─────────────── */
+  --color-sell:     #F59E0B;
+  --color-sell-bg:  #FFFBEB;
+  --color-buy:      #3B82F6;
+  --color-buy-bg:   #EFF6FF;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    color: #0F172A;
+    background: #FFFFFF;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 모바일 탭 하이라이트 제거 */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 스크롤바 숨김 (스크롤 기능은 유지) */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── 애니메이션 유틸리티 클래스 ─────────────────────────────────────────── */
+@layer utilities {
+  /* 아래에서 위로 페이드 인 (컴포넌트 마운트 시 사용) */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  /* 위에서 아래로 슬라이드 (토스트 알림 등장) */
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  /* 아래에서 위로 슬라이드 (모달 등장) */
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
