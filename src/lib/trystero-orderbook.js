@@ -19,7 +19,7 @@ import { validateOrder, isOrderExpired, stripSensitiveFields } from '../types/or
 import { verifyOrder } from './signature.js'
 import { putOrder, getAllOrders, deleteExpiredOrders } from './indexeddb.js'
 
-const ORDERBOOK_APP_ID = 'miniswap-orderbook-v1'
+const ORDERBOOK_APP_ID_PREFIX = 'miniswap-orderbook-v1'
 
 /**
  * @typedef {Object} OrderbookRoom
@@ -37,6 +37,7 @@ const ORDERBOOK_APP_ID = 'miniswap-orderbook-v1'
  * Create and join the P2P orderbook room.
  *
  * @param {Object}   [options]
+ * @param {string}   [options.networkKey]      - Network key for room isolation
  * @param {string}   [options.appId]           - Override app ID (테스트용)
  * @param {string[]} [options.relays]          - Override relay list
  * @returns {Promise<OrderbookRoom>}
@@ -44,7 +45,9 @@ const ORDERBOOK_APP_ID = 'miniswap-orderbook-v1'
 export async function createOrderbookRoom(options = {}) {
   const { joinRoom } = await import('trystero/nostr')
 
-  const appId = options.appId || ORDERBOOK_APP_ID
+  // 네트워크별 오더북 격리: appId에 networkKey를 포함하여 서로 다른 방 사용
+  const networkSuffix = options.networkKey ? `-${options.networkKey}` : ''
+  const appId = options.appId || `${ORDERBOOK_APP_ID_PREFIX}${networkSuffix}`
 
   // Trystero 내장 릴레이 사용 (appId 기반 deterministic 선택)
   // 모든 유저가 같은 appId → 같은 릴레이 5개 → 서로 발견 가능

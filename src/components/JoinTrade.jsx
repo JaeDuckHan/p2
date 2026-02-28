@@ -16,7 +16,8 @@ import { useState } from 'react'
 import { useAccount, useSwitchChain } from 'wagmi'
 import { useGetTrade, getEscrowAddress, formatUsdt } from '../hooks/useEscrow'
 import { TradeStatus, STATUS_LABEL } from '../constants'
-import { MAINNET_CHAIN_ID, CHAIN_NAME } from '../constants/network'
+import { useNetwork } from '../contexts/NetworkContext'
+import { isTronEscrowAvailable } from '../hooks/useTronEscrow'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -39,7 +40,7 @@ const STATUS_BADGE_VARIANT = {
 export default function JoinTrade({ onJoined }) {
   const { address, chainId } = useAccount()
   const { switchChain } = useSwitchChain()
-  // 사용자가 입력한 거래 ID 문자열
+  const { network, isTron } = useNetwork()
   const [input, setInput] = useState('')
 
   // 입력값 정규화: 0x 접두사 추가, 길이 66자(0x + 64자리 hex) 여부 확인
@@ -71,15 +72,29 @@ export default function JoinTrade({ onJoined }) {
     onJoined(tradeId, role)
   }
 
+  // Tron 에스크로 미배포 시 안내
+  if (isTron && !isTronEscrowAvailable()) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-8 text-center">
+        <Alert variant="info">
+          <AlertDescription>
+            <p className="font-semibold mb-1">Tron 에스크로 준비 중</p>
+            <p>Tron 네트워크의 에스크로 서비스는 현재 준비 중입니다.</p>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
   if (!escrowAddr) {
     return (
       <div className="flex flex-col items-center gap-4 py-8 text-center">
         <Alert variant="warning">
           <AlertDescription>
             <p className="font-semibold mb-1">네트워크 전환 필요</p>
-            <p className="mb-3">이 앱은 <strong>{CHAIN_NAME}</strong> 메인넷에서 동작합니다.</p>
-            <Button variant="warning" size="sm" onClick={() => switchChain({ chainId: MAINNET_CHAIN_ID })}>
-              {CHAIN_NAME}으로 전환
+            <p className="mb-3">이 앱은 <strong>{network.name}</strong> 메인넷에서 동작합니다.</p>
+            <Button variant="warning" size="sm" onClick={() => switchChain({ chainId: network.chainId })}>
+              {network.name}으로 전환
             </Button>
           </AlertDescription>
         </Alert>

@@ -3,10 +3,12 @@
  *
  * React 루트를 생성하고 전역 Provider를 중첩하여 렌더링합니다.
  * Provider 순서 (바깥→안):
- *   WagmiProvider      — 지갑 연결 및 온체인 상호작용 (wagmi)
+ *   NetworkProvider     — 런타임 네트워크 선택
+ *   WagmiProvider       — 지갑 연결 및 온체인 상호작용 (wagmi)
  *   QueryClientProvider — 서버 상태 캐싱 (TanStack React Query)
- *   XmtpProvider       — P2P 메시지 레이어 (XMTP 프로토콜)
- *   ToastProvider      — 전역 토스트 알림 시스템
+ *   WalletProvider      — 통합 지갑 컨텍스트 (EVM/Tron 어댑터)
+ *   XmtpProvider        — P2P 메시지 레이어 (XMTP 프로토콜)
+ *   ToastProvider       — 전역 토스트 알림 시스템
  */
 
 import React from 'react'
@@ -14,6 +16,8 @@ import ReactDOM from 'react-dom/client'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { wagmiConfig } from './lib/wagmi'
+import { NetworkProvider } from './contexts/NetworkContext'
+import { WalletProvider } from './contexts/WalletContext'
 import { XmtpProvider } from './contexts/XmtpContext'
 import { ToastProvider } from './contexts/ToastContext'
 import App from './App'
@@ -31,14 +35,18 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <XmtpProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </XmtpProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <NetworkProvider>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <WalletProvider>
+            <XmtpProvider>
+              <ToastProvider>
+                <App />
+              </ToastProvider>
+            </XmtpProvider>
+          </WalletProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </NetworkProvider>
   </React.StrictMode>
 )

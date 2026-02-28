@@ -31,38 +31,29 @@ import { useOrderbook } from './hooks/useOrderbook'
 import { useNetworkSwitch } from './hooks/useNetworkSwitch'
 import { useAppRouter } from './hooks/useAppRouter'
 import { useTradeEvents } from './hooks/useTradeEvents'
-import { SUPPORTED_CHAINS } from './constants/network'
+import { useWallet } from './contexts/WalletContext'
+import { useNetwork } from './contexts/NetworkContext'
+import { getSupportedChainIds } from './constants/network'
 import { Button } from '@/components/ui/button'
 
 /** MiniSwap 루트 컴포넌트 */
 export default function App() {
-  const { isConnected, chain, chainId, address, status } = useAccount()
+  const { isConnected, address, chainId } = useWallet()
+  const { networkKey, isEvm } = useNetwork()
+  // wagmi의 useAccount는 useAppRouter의 status 판별에 필요
+  const { status } = useAccount()
 
-  /**
-   * 현재 진행중인 거래 정보
-   * null이면 거래 없음, 값이 있으면 TradeRoom 화면으로 라우팅됨
-   * 형태: null | { tradeId: string, role: 'seller' | 'buyer' }
-   */
   const [activeTrade, setActiveTrade] = useState(null)
-
-  /**
-   * 현재 표시 중인 탭
-   * 'orderbook' | 'my-orders' | 'history'
-   */
   const [page, setPage] = useState('orderbook')
-
-  /**
-   * 에스크로 생성 대기 옵션 (판매자가 구매자를 선택한 후 CreateTrade 화면 표시)
-   * null이면 비활성, 값이 있으면 CreateTrade 화면을 렌더링
-   * 형태: null | { orderId: string, buyerAddress: string }
-   */
   const [createTradeOptions, setCreateTradeOptions] = useState(null)
 
   const orderbook = useOrderbook({ enabled: isConnected })
   const { switchNetwork, switching: networkSwitching } = useNetworkSwitch()
 
-  /** 지갑은 연결됐으나 지원하지 않는 네트워크에 있는 경우 true */
-  const wrongNetwork = isConnected && chainId && !SUPPORTED_CHAINS.includes(chainId)
+  // EVM: 지갑 체인이 현재 네트워크의 지원 체인 목록에 없으면 경고
+  // Tron: 네트워크 불일치 개념 없음
+  const supportedChainIds = getSupportedChainIds(networkKey)
+  const wrongNetwork = isEvm && isConnected && chainId && !supportedChainIds.includes(chainId)
 
   /** 현재 표시할 화면 */
   const view = useAppRouter({ status, isConnected, wrongNetwork, activeTrade, createTradeOptions })

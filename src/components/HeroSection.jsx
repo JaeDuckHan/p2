@@ -3,13 +3,16 @@
  *
  * 지갑 미연결 상태에서 표시되는 랜딩 페이지.
  * MiniSwap 소개, 특징 카드 3개, 지갑 연결 CTA, 이용 방법 단계를 렌더링한다.
+ * 현재 선택된 네트워크에 맞는 동적 레이블을 표시한다.
  */
 import { Shield, Zap, Coins } from 'lucide-react'
 import WalletButton from './WalletButton'
 import { Card } from '@/components/ui/card'
-import { LAYER_LABEL, LAYER_DESCRIPTION } from '../constants/network'
+import { useNetwork } from '../contexts/NetworkContext'
 
 export default function HeroSection() {
+  const { network } = useNetwork()
+
   return (
     <div className="flex flex-col items-center px-6 py-12 animate-fade-in">
 
@@ -37,9 +40,9 @@ export default function HeroSection() {
         </Card>
         <Card className="p-4 flex flex-col items-center text-center gap-2 hover:shadow-xl transition-shadow duration-200">
           <Zap className="w-6 h-6 text-amber-600" />
-          <div className="text-sm font-semibold text-gray-900">{LAYER_LABEL}</div>
+          <div className="text-sm font-semibold text-gray-900">{network.layerLabel}</div>
           <div className="text-xs text-gray-700 leading-snug">
-            {LAYER_DESCRIPTION}
+            {network.layerDescription}
           </div>
         </Card>
         <Card className="p-4 flex flex-col items-center text-center gap-2 hover:shadow-xl transition-shadow duration-200">
@@ -55,7 +58,9 @@ export default function HeroSection() {
       <div className="flex flex-col items-center gap-4 mb-12 w-full">
         <WalletButton />
         <p className="text-sm text-gray-600">
-          MetaMask 또는 호환 지갑이 필요합니다
+          {network.chainType === 'tron'
+            ? 'TronLink 지갑이 필요합니다'
+            : 'MetaMask 또는 호환 지갑이 필요합니다'}
         </p>
       </div>
 
@@ -66,7 +71,7 @@ export default function HeroSection() {
         </div>
         <div className="flex items-start justify-center gap-1">
           {[
-            { num: '1', title: '지갑 연결', desc: 'MetaMask로 로그인' },
+            { num: '1', title: '지갑 연결', desc: '지갑으로 로그인' },
             { num: '2', title: 'USDT 예치', desc: '에스크로에 안전 보관' },
             { num: '3', title: 'KRW 송금', desc: 'P2P 채팅으로 확인' },
             { num: '4', title: 'USDT 수령', desc: '자동 전송 완료' },

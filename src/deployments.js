@@ -3,5 +3,9 @@ export const DEPLOYMENTS = {
   "421614": {
     "escrow": "0xac69c30000A3B277F0Df38C612c357D85547a7D8",
     "usdt": "0x3f14920c99BEB920Afa163031c4e47a3e03B3e4A"
+  },
+  "tron": {
+    "escrow": null,
+    "usdt": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
   }
 };

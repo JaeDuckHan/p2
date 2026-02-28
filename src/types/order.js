@@ -39,6 +39,28 @@
  * @property {string}  [bankAccount] - Revealed only on acceptance
  */
 
+// ── Address validation (EVM + Tron) ───────────────────────────────────────────
+
+const EVM_ADDRESS_RE  = /^0x[0-9a-fA-F]{40}$/
+const TRON_ADDRESS_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/
+
+/**
+ * Validate an address (EVM 0x... or Tron T...).
+ * TronWeb.isAddress() is preferred when available, regex as fallback.
+ * @param {string} addr
+ * @returns {boolean}
+ */
+export function isValidAddress(addr) {
+  if (!addr || typeof addr !== 'string') return false
+  // EVM address
+  if (EVM_ADDRESS_RE.test(addr)) return true
+  // Tron address — use TronWeb if available, otherwise regex
+  if (typeof window !== 'undefined' && window.tronWeb?.isAddress) {
+    return window.tronWeb.isAddress(addr)
+  }
+  return TRON_ADDRESS_RE.test(addr)
+}
+
 // Default expiry: 30 minutes from now
 const DEFAULT_EXPIRY_MS = 30 * 60 * 1000
 
@@ -130,7 +152,7 @@ export function validateOrder(order) {
   }
 
   const owner = order.type === 'SELL' ? order.seller : order.buyer
-  if (!owner || !/^0x[0-9a-fA-F]{40}$/.test(owner)) {
+  if (!owner || !isValidAddress(owner)) {
     return { valid: false, reason: 'Invalid owner address' }
   }
   if (typeof order.amount !== 'number' || order.amount <= 0) {

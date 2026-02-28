@@ -19,6 +19,7 @@ import { verifyAcceptRequest } from '../lib/signature.js'
 import { deleteExpiredOrders, getAllOrders, deleteOrder } from '../lib/indexeddb.js'
 import { IdentifierKind, SortDirection, GroupMessageKind } from '@xmtp/browser-sdk'
 import { useXmtp } from '../contexts/XmtpContext.jsx'
+import { useNetwork } from '../contexts/NetworkContext.jsx'
 
 // Cleanup interval for expired orders (30 seconds)
 const CLEANUP_INTERVAL_MS = 30_000
@@ -48,6 +49,8 @@ function nextDelay(current) {
  * @param {boolean} [options.enabled=true]  - Whether to connect to the orderbook
  */
 export function useOrderbook({ enabled = true } = {}) {
+  const { networkKey } = useNetwork()
+
   const [sellOrders,      setSellOrders]      = useState([])
   const [buyOrders,       setBuyOrders]       = useState([])
   const [acceptRequests,  setAcceptRequests]  = useState([])
@@ -85,10 +88,17 @@ export function useOrderbook({ enabled = true } = {}) {
       .catch(err => console.warn('[useOrderbook] Failed to load persisted orders:', err))
   }, [enabled])
 
-  // ── Connect to P2P orderbook room — 자동 재연결 + 지수 백오프 ───────────
+  // ── Connect to P2P orderbook room — 네트워크별 격리 + 자동 재연결 ────────
 
   useEffect(() => {
     if (!enabled) return
+
+    // 네트워크 변경 시 기존 오더 클리어
+    setSellOrders([])
+    setBuyOrders([])
+    setAcceptRequests([])
+    setAcceptResponses([])
+    setTradeNotifications([])
 
     cancelledRef.current = false
 
@@ -96,7 +106,7 @@ export function useOrderbook({ enabled = true } = {}) {
       if (cancelledRef.current) return
 
       try {
-        const room = await createOrderbookRoom()
+        const room = await createOrderbookRoom({ networkKey })
         if (cancelledRef.current) {
           room.leave()
           return
@@ -181,7 +191,7 @@ export function useOrderbook({ enabled = true } = {}) {
       setPeerCount(0)
       setRoomReady(false)
     }
-  }, [enabled])
+  }, [enabled, networkKey])
 
   // ── Stream XMTP DMs — 에러 시 자동 재시작 + 하트비트 ────────────────────
 

@@ -1,47 +1,64 @@
 /**
  * useNetworkSwitch — 네트워크 전환 커스텀 훅
  *
- * MetaMask를 통해 활성 네트워크로 전환하는 로직을 캡슐화한다.
- * ACTIVE_NETWORK 설정에 따라 대상 네트워크가 자동 결정된다.
+ * NetworkContext의 활성 네트워크로 EVM 지갑의 체인을 전환한다.
+ * Tron은 네트워크 전환 개념이 없으므로 EVM 전용.
  *
- * 반환값:
- *   switchNetwork  — 네트워크 전환 요청 함수
- *   switching      — 전환 요청 진행 중 여부
- *   error          — 전환 실패 시 에러 메시지 (null이면 에러 없음)
+ * 3단계 fallback:
+ *   1. wallet_switchEthereumChain 시도
+ *   2. 실패(4902) → wallet_addEthereumChain 시도
+ *   3. 그래도 실패 → "수동 변경 가이드" 안내
  */
 import { useState } from 'react'
-import { CHAIN_ID_HEX, CHAIN_PARAMS } from '../constants/network'
+import { useNetwork } from '../contexts/NetworkContext'
 
 export function useNetworkSwitch() {
+  const { network, isEvm } = useNetwork()
   const [switching, setSwitching] = useState(false)
   const [error, setError] = useState(null)
 
   async function switchNetwork() {
+    if (!isEvm) return
+
     if (!window.ethereum) {
-      setError('MetaMask가 설치되어 있지 않습니다.')
+      setError('EVM 지갑이 설치되어 있지 않습니다.')
       return
     }
+
+    const chainIdHex = network.chainIdHex
+    const chainParams = network.chainParams
+
+    if (!chainIdHex) {
+      setError('네트워크 설정이 올바르지 않습니다.')
+      return
+    }
+
     setSwitching(true)
     setError(null)
+
     try {
+      // 1단계: 체인 전환 시도
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: CHAIN_ID_HEX }],
+        params: [{ chainId: chainIdHex }],
       })
     } catch (err) {
-      if (err.code === 4902) {
+      if (err.code === 4902 && chainParams) {
         try {
+          // 2단계: 체인 추가 시도
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
-            params: [CHAIN_PARAMS],
+            params: [chainParams],
           })
         } catch (_) {
-          setError('네트워크 추가가 취소되었습니다. 수동으로 추가해 주세요.')
+          // 3단계: 수동 변경 안내
+          setError(`자동 추가에 실패했습니다. 지갑에서 직접 ${network.name} 네트워크를 추가해 주세요. chainlist.org에서 "${network.chainlistSearch ?? network.name}" 검색 후 추가할 수 있습니다.`)
         }
       } else if (err.code === 4001) {
         setError('전환이 취소되었습니다.')
       } else {
-        setError('네트워크 전환에 실패했습니다. 수동으로 추가해 주세요.')
+        // 3단계: 수동 변경 안내
+        setError(`네트워크 전환에 실패했습니다. 지갑에서 직접 ${network.name} 네트워크를 추가해 주세요.`)
       }
     } finally {
       setSwitching(false)

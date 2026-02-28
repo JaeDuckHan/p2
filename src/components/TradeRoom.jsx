@@ -26,7 +26,8 @@ import { putTrade } from '@/lib/indexeddb'
 import { useXmtpChat } from '../hooks/useXmtpChat'
 import { useXmtp } from '../contexts/XmtpContext'
 import { TradeStatus } from '../constants'
-import { getExplorerUrl, EXPLORER_NAME } from '../constants/network'
+import { getExplorerUrl } from '../constants/network'
+import { useNetwork } from '../contexts/NetworkContext'
 import { useTradeStateMachine } from '../hooks/useTradeStateMachine'
 import TradeTimeline from './TradeTimeline'
 import EscrowBadge from './EscrowBadge'
@@ -180,6 +181,7 @@ function MessageBubble({ msg }) {
  */
 export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory }) {
   const { address, chainId } = useAccount()
+  const { networkKey, network } = useNetwork()
 
   /** 에스크로 컨트랙트에서 거래 데이터를 조회하는 훅 */
   const { trade, isLoading, refetch } = useGetTrade(tradeId)
@@ -487,12 +489,12 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
               <div className="flex justify-between text-xs mt-1.5">
                 <span className="text-slate-500">탐색기</span>
                 <a
-                  href={`${getExplorerUrl(chainId)}/address/${address}`}
+                  href={getExplorerUrl(networkKey, { type: 'address', value: address })}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-600 flex items-center gap-1 hover:underline text-[11px] font-bold"
                 >
-                  {EXPLORER_NAME}에서 확인
+                  {network.explorerName}에서 확인
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>

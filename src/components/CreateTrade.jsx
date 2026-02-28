@@ -37,7 +37,8 @@ import { Stepper } from '@/components/ui/stepper'
 import { Input } from '@/components/ui/input'
 import { InputWithUnit } from '@/components/ui/input'
 import { useToast } from '@/contexts/ToastContext'
-import { MAINNET_CHAIN_ID, CHAIN_NAME } from '../constants/network'
+import { useNetwork } from '../contexts/NetworkContext'
+import { isTronEscrowAvailable } from '../hooks/useTronEscrow'
 // approve 트랜잭션에 필요한 최소 ETH 잔액 (0.00005 ETH)
 const MIN_ETH_FOR_APPROVE = 50_000_000_000_000n // 0.00005 ETH — approve 가스비
 
@@ -50,6 +51,7 @@ const MIN_ETH_FOR_APPROVE = 50_000_000_000_000n // 0.00005 ETH — approve 가�
 export default function CreateTrade({ onCreated, prefillBuyer }) {
   const { address, chainId } = useAccount()
   const { switchChain } = useSwitchChain()
+  const { network, isTron } = useNetwork()
 
   // 구매자 지갑 주소 입력 상태
   const [buyer,  setBuyer]  = useState(prefillBuyer || '')
@@ -126,7 +128,25 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
   // 트랜잭션 처리 중 여부 (버튼 비활성화에 사용)
   const isWorking = approvePending || approveConfirming || depositPending || depositConfirming
 
-  // 지원하지 않는 네트워크인 경우 전환 안내 화면 표시
+  // Tron 에스크로 미배포 시 안내
+  if (isTron && !isTronEscrowAvailable()) {
+    return (
+      <div className="flex flex-col items-center gap-5 py-8 text-center">
+        <div className="w-[76px] h-[76px] rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-4xl mx-auto">
+          🔧
+        </div>
+        <div>
+          <div className="text-xl font-black text-slate-900 mb-2">Tron 에스크로 준비 중</div>
+          <div className="text-sm text-slate-500 leading-relaxed">
+            Tron 네트워크의 에스크로 서비스는 현재 준비 중입니다.<br />
+            오더 게시 및 조회는 정상적으로 이용 가능합니다.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // EVM: 지원하지 않는 네트워크인 경우 전환 안내
   if (!escrowAddr) {
     return (
       <div className="flex flex-col items-center gap-5 py-8 text-center">
@@ -136,10 +156,10 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
         <div>
           <div className="text-xl font-black text-slate-900 mb-2">잘못된 네트워크</div>
           <div className="text-sm text-slate-500 leading-relaxed mb-6">
-            <strong className="text-primary-600">{CHAIN_NAME}</strong> 메인넷으로 변경 필요
+            <strong className="text-primary-600">{network.name}</strong> 메인넷으로 변경 필요
           </div>
         </div>
-        <Button variant="default" onClick={() => switchChain({ chainId: MAINNET_CHAIN_ID })}>
+        <Button variant="default" onClick={() => switchChain({ chainId: network.chainId })}>
           자동으로 네트워크 전환
         </Button>
       </div>
