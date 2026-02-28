@@ -58,6 +58,24 @@ async function main() {
     usdtAddress = '0x3f14920c99BEB920Afa163031c4e47a3e03B3e4A'
     console.log('\n[1/3] Using Arbitrum Sepolia USDT:', usdtAddress)
 
+  } else if (network === 'polygon') {
+    usdtAddress = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'  // PoS Bridge USDT
+    console.log('\n[1/3] Using Polygon PoS USDT:', usdtAddress)
+
+  } else if (network === 'polygonAmoy') {
+    // Amoy 테스트넷: MockERC20 배포
+    console.log('\n[1/3] Deploying MockERC20 (USDT) for Polygon Amoy...')
+    const MockERC20 = await ethers.getContractFactory('MockERC20')
+    const mockUsdt  = await MockERC20.deploy('Tether USD', 'USDT', 6)
+    await mockUsdt.waitForDeployment()
+    usdtAddress = await mockUsdt.getAddress()
+    console.log('     MockUSDT  :', usdtAddress)
+
+    for (let i = 0; i < Math.min(signers.length, 5); i++) {
+      await mockUsdt.mint(signers[i].address, ethers.parseUnits('100000', 6))
+    }
+    console.log('     Minted 100,000 USDT to first 5 accounts')
+
   } else {
     throw new Error(`지원하지 않는 네트워크: ${network}`)
   }

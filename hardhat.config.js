@@ -41,6 +41,24 @@ module.exports = {
         ? [process.env.DEPLOYER_PRIVATE_KEY]
         : [],
     },
+
+    // ── Polygon PoS (메인넷) ──────────────────────────────────
+    polygon: {
+      url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
+      chainId: 137,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY
+        ? [process.env.DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
+
+    // ── Polygon Amoy (테스트넷) ───────────────────────────────
+    polygonAmoy: {
+      url: process.env.POLYGON_AMOY_RPC_URL || "https://rpc-amoy.polygon.technology",
+      chainId: 80002,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY
+        ? [process.env.DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
   },
 
   // ── Gas Reporter ─────────────────────────────────────────────
@@ -55,8 +73,10 @@ module.exports = {
   // ── Etherscan / Arbiscan 검증 ─────────────────────────────────
   etherscan: {
     apiKey: {
-      arbitrumOne:    process.env.ARBISCAN_API_KEY || "",
+      arbitrumOne:     process.env.ARBISCAN_API_KEY || "",
       arbitrumSepolia: process.env.ARBISCAN_API_KEY || "",
+      polygon:         process.env.POLYGONSCAN_API_KEY || "",
+      polygonAmoy:     process.env.POLYGONSCAN_API_KEY || "",
     },
   },
 

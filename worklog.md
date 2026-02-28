@@ -271,9 +271,217 @@ lucide-react (아이콘)
 
 ---
 
-## 11. 남은 작업
+---
 
-- [ ] Arbitrum One 메인넷 스마트 컨트랙트 배포 (Hardhat deploy 스크립트 실행 — 수동 작업)
-- [ ] Vercel 환경변수 업데이트 (CONTRACT_ADDRESS 등)
+# 멀티체인 구조 개편 작업 로그
+
+> 작업 기간: 2026-02-28 ~ 03-01
+> 작업 범위: 빌드 타임 네트워크 선택 → 런타임 네트워크 선택 (Arbitrum / Polygon / Tron)
+
+---
+
+## Phase 1: 네트워크 레지스트리 + 컨텍스트 ✅
+
+1. **`src/constants/network.js`** — 전면 재작성
+   - 기존 상수(`ACTIVE_NETWORK`, `CHAIN_NAME`, `MAINNET_CHAIN_ID`, `SUPPORTED_CHAINS`, `CHAIN_ID_HEX`, `CHAIN_PARAMS`, `EXPLORER_NAME`, `LAYER_LABEL` 등) 전부 제거
+   - `NETWORKS` 레지스트리 도입: Arbitrum One, Arbitrum Sepolia, Polygon, Polygon Amoy, Tron 5개 네트워크
+   - 각 네트워크에 `chainType`, `chainParams`, `explorerTxTemplate`, `explorerAddressTemplate`, `bridgeUrl`, `description`, `features[]` 등 메타데이터 포함
+   - 유틸 함수 export: `getNetwork()`, `getNetworkByChainId()`, `getExplorerUrl()`, `getSupportedChainIds()`
+
+2. **`src/lib/amount.js`** — 신규 생성
+   - BigInt 기반 USDT 금액 변환: `parseAmount(str, decimals)`, `formatAmount(raw, decimals)`
+   - JS Number 정밀도 문제 방지
+
+3. **`src/contexts/NetworkContext.jsx`** — 신규 생성
+   - `useState(() => localStorage.getItem('miniswap:network'))` — 동기 초기화로 깜빡임 방지
+   - export: `NetworkProvider`, `useNetwork()` → `{ networkKey, network, setNetwork, isEvm, isTron }`
+
+4. **`src/lib/wagmi.js`** — 수정
+   - 모든 EVM 체인(arbitrum, arbitrumSepolia, polygon, polygonAmoy) 한번에 등록
+   - `ACTIVE_NETWORK` 의존성 제거
+
+5. **`src/constants.js`** — 수정: Tron USDT 주소 추가
+6. **`src/deployments.js`** — 수정: `"tron": { "escrow": null, "usdt": "TR7NHq..." }` 추가
+
+---
+
+## Phase 2: 어댑터 레이어 ✅
+
+7. **`src/adapters/EvmAdapter.js`** — 신규 생성
+   - wagmi `useAccount`, `useConnect`, `useDisconnect` 래핑
+   - 통일된 인터페이스: `{ type, address, isConnected, connect, disconnect, connectorName, chainId }`
+
+8. **`src/adapters/TronAdapter.js`** — 신규 생성
+   - `window.tronWeb` / TronLink 래핑
+   - 주입 지연 핸들링: 1초 간격 × 5회 재시도, focus/visibility 재감지
+   - TronLink `setAccount`/`setNode` 메시지 이벤트 수신
+   - 언마운트 시 정리 (cleanup)
+
+9. **`src/contexts/WalletContext.jsx`** — 신규 생성
+   - `useNetwork()`로 활성 어댑터 결정
+   - 두 어댑터 모두 무조건 호출 (React hooks 규칙 준수)
+   - 활성 어댑터 상태만 노출: `{ address, isConnected, connect, disconnect, walletType, evm, tron }`
+
+---
+
+## Phase 3: Tron 에스크로 훅 ✅
+
+10. **`src/hooks/useTronEscrow.js`** — 신규 생성
+    - `DEPLOYMENTS.tron.escrow === null` 일 때 모든 훅이 no-op 반환
+    - `isTronEscrowAvailable()` 유틸 함수
+    - 스텁 훅: `useTronUsdtBalance`, `useTronGetTrade`, `useTronApproveUsdt`, `useTronDeposit`, `useTronRelease`, `useTronRefund`, `useTronDispute`
+
+---
+
+## Phase 4: UI 컴포넌트 ✅
+
+11. **`src/components/NetworkSelector.jsx`** — 신규 생성
+    - 트리거 버튼: 현재 네트워크 아이콘 + 이름 + 쉐브론
+    - 풀스크린 모달: 네트워크 카드 (설명, features, gasInfo, walletWarning, tokenStandard 배지)
+    - EVM↔Tron 전환 시 확인 다이얼로그 (지갑 비호환 안내)
+
+12. **`src/components/WalletButton.jsx`** — 전면 재작성
+    - `useWallet()`, `useNetwork()` 사용
+    - EVM 연결: 체인 이름 배지 + 축약 주소
+    - Tron 연결: "Tron" 빨간 배지 + T-주소
+    - "MetaMask" 하드코딩 제거 → "지갑 연결"
+
+13. **`src/components/AppShell.jsx`** — 수정
+    - 헤더에 `NetworkSelector` 추가 (로고와 WalletButton 사이)
+    - `useNetwork()`로 동적 `network.name` 경고 배너
+
+---
+
+## Phase 5: 기존 컴포넌트 마이그레이션 ✅
+
+14. **`src/main.jsx`** — 수정
+    - Provider 순서: `NetworkProvider > WagmiProvider > QueryClientProvider > WalletProvider > XmtpProvider > ToastProvider`
+
+15. **`src/App.jsx`** — 수정
+    - `useWallet()`, `useNetwork()` 사용
+    - `wrongNetwork` 판단에 `getSupportedChainIds(networkKey)` + EVM-only 조건 적용
+
+16. **`src/hooks/useNetworkSwitch.js`** — 전면 재작성
+    - `useNetwork()`로 동적 `chainIdHex`, `chainParams`
+    - Tron 조기 리턴 (네트워크 전환 불필요)
+    - 3단계 폴백: `switchEthereumChain` → `addEthereumChain` → 수동 가이드 토스트
+
+17. **`src/components/HeroSection.jsx`** — 수정
+    - `network.layerLabel`, `network.layerDescription` 동적 표시
+    - Tron → "TronLink 지갑이 필요합니다" / EVM → "MetaMask 또는 호환 지갑이 필요합니다"
+
+18. **`src/components/NetworkGuide.jsx`** — 전면 재작성
+    - Tron: TronLink 설치 가이드 / EVM: 네트워크 전환 + ChainList + 브릿지 안내
+
+19. **`src/components/CreateTrade.jsx`** — 수정
+    - Tron 에스크로 미지원 시 "Tron 에스크로 준비 중" 블록 표시
+
+20. **`src/components/JoinTrade.jsx`** — 수정
+    - CreateTrade와 동일한 Tron 에스크로 비활성화 패턴
+
+21. **`src/components/TradeRoom.jsx`** — 수정
+    - `getExplorerUrl()` 템플릿 API 사용
+    - `network.explorerName` 동적 탐색기 이름
+
+---
+
+## Phase 6: 오더북 격리 + XMTP + 서명 ✅
+
+22. **`src/lib/trystero-orderbook.js`** — 수정
+    - AppId: `miniswap-orderbook-v1-{networkKey}` — 네트워크별 P2P 룸 격리
+
+23. **`src/hooks/useOrderbook.js`** — 수정
+    - `useNetwork()`에서 `networkKey` 가져오기
+    - `createOrderbookRoom({ networkKey })` 전달
+    - 네트워크 변경 시 기존 오더/요청 상태 클리어
+    - dependency array: `[enabled, networkKey]`
+
+24. **`src/contexts/XmtpContext.jsx`** — 수정
+    - Tron 네트워크 시 XMTP 초기화 스킵 (`isTron` 체크)
+    - `isTronSkipped` 플래그 노출
+
+25. **`src/types/order.js`** — 수정
+    - `isValidAddress()` 추가: EVM(`/^0x[0-9a-fA-F]{40}$/`) + Tron(`TronWeb.isAddress` → regex fallback)
+    - `validateOrder()`에서 `isValidAddress()` 사용
+
+26. **`src/lib/signature.js`** — 전면 재작성
+    - chainType 자동 감지 (`detectChainType()` — 주소 형식 기반)
+    - EVM: ethers.js `solidityPackedKeccak256` + `personal_sign`
+    - Tron: TronWeb `signMessageV2` / `verifyMessageV2`
+    - Public API 하위 호환: `signOrder(signer, order, { chainType? })`, `verifyOrder(order)`
+
+---
+
+## Phase 7: 빌드 검증 ✅
+
+27. `vite build` 성공 — 6778 modules, 1분 7초, 에러 0건
+28. Dev 서버 정상 동작 확인 — 콘솔 에러 0, 모든 UI 렌더링 정상
+29. 커밋 `8affc74` — 26 files changed, +1524/-407 lines
+30. `git push origin main` 완료
+
+---
+
+## Phase 8: 배포 인프라 구축 ✅
+
+31. **`hardhat.config.js`** — 수정: Polygon PoS (137) + Polygon Amoy (80002) 네트워크 추가, Polygonscan API key
+32. **`scripts/deploy.js`** — 수정: `polygon`, `polygonAmoy` USDT 주소 분기 추가
+33. **`scripts/deploy-tron.js`** — 신규 생성: TronWeb 기반 Tron 배포 스크립트 (Hardhat ABI/bytecode 재사용)
+34. **`.env.example`** — 신규 생성: 배포 환경변수 템플릿
+35. **`scripts/deploy-polygon-amoy.js`** — 신규 생성: Polygon Amoy 배포 래퍼
+36. **`scripts/deploy-tron-nile.js`** — 신규 생성: Tron Nile 배포 래퍼
+
+---
+
+## 파일 변경 요약 (멀티체인 전체)
+
+| 구분 | 파일 수 | 목록 |
+|---|---|---|
+| **신규** | 12 | NetworkContext, WalletContext, EvmAdapter, TronAdapter, useTronEscrow, NetworkSelector, amount.js, deploy-tron.js, deploy-polygon-amoy.js, deploy-tron-nile.js, .env.example, .env |
+| **전면 재작성** | 4 | WalletButton, useNetworkSwitch, NetworkGuide, signature.js |
+| **수정** | 18 | network.js, constants.js, deployments.js, wagmi.js, main.jsx, App.jsx, AppShell, HeroSection, CreateTrade, JoinTrade, TradeRoom, useOrderbook, trystero-orderbook, XmtpContext, order.js, hardhat.config.js, deploy.js, launch.json |
+
+---
+
+## 남은 작업 🔲
+
+### 컨트랙트 배포 (테스트넷 토큰 충전 후 진행)
+
+| 네트워크 | 체인ID | 상태 | 필요 사항 |
+|---|---|---|---|
+| Arbitrum Sepolia | 421614 | ✅ 배포 완료 | `0xac69c300...47a7D8` |
+| Polygon Amoy | 80002 | 🔲 미배포 | 배포자(`0x6E7E4d...F1D7`)에 테스트 MATIC 필요 |
+| Tron Nile | - | 🔲 미배포 | 배포자 Tron 주소에 테스트 TRX 필요 |
+| Arbitrum One (메인넷) | 42161 | 🔲 선택 | 실제 ETH 필요 |
+| Polygon PoS (메인넷) | 137 | 🔲 선택 | 실제 MATIC 필요 |
+| Tron (메인넷) | - | 🔲 선택 | 실제 TRX 필요 |
+
+### 테스트넷 토큰 Faucet
+
+- **Polygon Amoy MATIC**: https://faucet.polygon.technology
+- **Tron Nile TRX**: https://nileex.io/join/getJoinPage
+
+### 배포 실행 명령
+
+```bash
+# Polygon Amoy
+npx hardhat run scripts/deploy.js --network polygonAmoy
+
+# Tron Nile
+TRON_NETWORK=nile node scripts/deploy-tron.js
+```
+
+### 배포 후 작업
+
+- [ ] `src/deployments.js`에 Polygon/Tron 컨트랙트 주소 자동 등록 (deploy 스크립트가 처리)
+- [ ] 배포 결과 커밋 + 푸시
+- [ ] 프론트엔드에서 Polygon/Tron 네트워크 전환 후 에스크로 동작 확인
+- [ ] `tronweb` npm 패키지 설치 (Tron 배포 시)
+
+### 향후 개선 (선택)
+
+- [ ] Tron 에스크로 훅(`useTronEscrow.js`) 실제 구현 (현재 no-op placeholder)
+- [ ] XMTP Tron 대안 메시징 (현재 Tron은 P2P 채팅 비활성)
+- [ ] Polygon/Tron 메인넷 배포
+- [ ] 컨트랙트 소스코드 검증 (Polygonscan, Tronscan)
 - [ ] 실 기기 테스트 (모바일 Safari, Chrome)
 - [ ] 성능 최적화 (코드 스플리팅, 번들 크기 축소)
