@@ -33,7 +33,7 @@ function TabsTrigger({ value, children, className }) {
     <button
       type="button"
       className={cn(
-        'relative px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer',
+        'relative px-5 py-3 text-base font-medium transition-colors cursor-pointer',
         isActive
           ? 'text-primary-600'
           : 'text-slate-500 hover:text-slate-700',

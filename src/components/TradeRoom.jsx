@@ -26,6 +26,9 @@ import { putTrade } from '@/lib/indexeddb'
 import { useXmtpChat } from '../hooks/useXmtpChat'
 import { useXmtp } from '../contexts/XmtpContext'
 import { TradeStatus } from '../constants'
+import { useTradeStateMachine } from '../hooks/useTradeStateMachine'
+import TradeTimeline from './TradeTimeline'
+import EscrowBadge from './EscrowBadge'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/contexts/ToastContext'
 import { Button } from '@/components/ui/button'
@@ -35,7 +38,6 @@ import { Banner } from '@/components/ui/banner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
-import { Stepper } from '@/components/ui/stepper'
 import {
   ArrowLeft,
   CheckCircle,
@@ -132,18 +134,6 @@ function formatCountdownShort(expiresAt) {
   const m = Math.floor(diff / 60)
   const s = diff % 60
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-}
-
-// ─── 거래 상태 → Badge 색상 매핑 ─────────────────────────────────────────────
-/**
- * 거래 상태 코드에 해당하는 Badge 컴포넌트의 variant를 정의한다.
- * TradeStatus 상수는 constants.js에서 가져온다.
- */
-const STATUS_BADGE_VARIANT = {
-  [TradeStatus.LOCKED]:   'warning',
-  [TradeStatus.RELEASED]: 'success',
-  [TradeStatus.DISPUTED]: 'destructive',
-  [TradeStatus.REFUNDED]: 'info',
 }
 
 /** 거래 상태 코드 → 표시 레이블 매핑 */
@@ -416,48 +406,9 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
       .catch(() => {})
   }
 
-  // ── 통합 단계 표시기 (A.7) ──────────────────────────────────────────────────
-  /**
-   * 거래 진행 단계를 4단계로 표시한다.
-   * 각 문자열의 <br> 태그는 Stepper 컴포넌트 내부에서 HTML로 렌더링된다.
-   */
-  const UNIFIED_STEPS = ['에스크로<br>락', 'KRW<br>송금 대기', '입금<br>확인', '완료']
-
-  /** 현재 거래 상태에 해당하는 단계 인덱스(0~4)를 반환한다. */
-  function getUnifiedStepCurrent() {
-    if (status === TradeStatus.RELEASED || status === TradeStatus.REFUNDED) return 4
-    if (status === TradeStatus.DISPUTED) return 2
-    if (status === TradeStatus.LOCKED) return 1
-    return 0
-  }
-
-  /**
-   * 현재 단계와 역할에 맞는 안내 메시지를 반환한다.
-   * 채팅에서 구매자가 보낸 시그널 메시지 감지 여부로 단계 2와 단계 3을 구분한다.
-   * @returns {string|null} 안내 문자열, 또는 표시 불필요 시 null
-   */
-  function getStepGuidance() {
-    if (status === TradeStatus.LOCKED) {
-      // 채팅에서 구매자 측 시그널 메시지 감지
-      // - 판매자 입장: 상대방(구매자)이 보낸 시그널 = !m.fromMe
-      // - 구매자 입장: 자신이 보낸 시그널 = m.fromMe
-      const hasBuyerSignal = messages.some(m => m.type === 'signal' && !m.fromMe && role === 'seller')
-        || messages.some(m => m.type === 'signal' && m.fromMe && role === 'buyer')
-
-      if (hasBuyerSignal) {
-        // 단계 3: KRW 송금 완료 시그널이 감지된 상태
-        if (role === 'seller') return '입금을 확인하고 USDT를 릴리즈하세요.'
-        if (role === 'buyer') return '판매자가 입금을 확인 중입니다.'
-      } else {
-        // 단계 2: KRW 송금 대기 중
-        if (role === 'seller') return '구매자가 KRW를 보내는 중입니다. 계좌를 확인하세요.'
-        if (role === 'buyer') return '판매자의 계좌로 KRW를 송금해주세요.'
-      }
-    }
-    return null
-  }
-
-  const stepGuidance = getStepGuidance()
+  // ── 거래 상태 머신 (5단계 UX 상태) ─────────────────────────────────────────
+  const { state: tradeState, stepIndex, guidance: stepGuidance, badgeVariant } =
+    useTradeStateMachine({ status, trade, messages, role })
 
   // ── 앱 바 타이틀 ─────────────────────────────────────────────────────────────
   /** 현재 거래 상태에 맞는 앱 바 타이틀 문자열을 반환한다. */
@@ -601,9 +552,9 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
         <div className="w-9" />
       </div>
 
-      {/* 통합 단계 표시기 (A.7) */}
+      {/* 5단계 거래 타임라인 */}
       <div className="px-4 pt-3 pb-2">
-        <Stepper steps={UNIFIED_STEPS} current={getUnifiedStepCurrent()} />
+        <TradeTimeline stepIndex={stepIndex} state={tradeState} />
         {stepGuidance && (
           <div className="mt-2 text-center text-xs text-slate-500 bg-slate-50 rounded-lg py-1.5 px-3">
             {stepGuidance}
@@ -625,11 +576,12 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
         )}
 
         <div className="px-4 flex flex-col gap-2.5">
-          {/* 거래 상태 배지 + 역할 배지 */}
-          <div className="flex items-center gap-2">
-            <Badge variant={trade ? STATUS_BADGE_VARIANT[status] : 'secondary'}>
+          {/* 거래 상태 배지 + 에스크로 보호 배지 + 역할 배지 */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={trade ? badgeVariant : 'secondary'}>
               {trade ? STATUS_LABEL[status] : '로드 중...'}
             </Badge>
+            {trade && <EscrowBadge status={status} />}
             <Badge variant="secondary">
               {role === 'seller' ? '📤 판매자' : '📥 구매자'}
             </Badge>

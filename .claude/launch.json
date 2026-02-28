@@ -85,5 +85,23 @@
       "runtimeArgs": ["scripts/git-rebase-commit-push.js"],
       "port": 9984
     }
+    ,{
+      "name": "git-trigger-deploy",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-trigger-deploy.js"],
+      "port": 9983
+    }
+    ,{
+      "name": "git-clone-p2",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-clone-p2.js"],
+      "port": 9982
+    }
+    ,{
+      "name": "git-commit-phase5",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-commit-phase5.js"],
+      "port": 9989
+    }
   ]
 }

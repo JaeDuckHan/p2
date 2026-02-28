@@ -61,7 +61,7 @@
   body {
     font-family: var(--font-sans);
     color: #0F172A;
-    background: #FFFFFF;
+    background: #F6F7FB;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     /* 모바일 탭 하이라이트 제거 */

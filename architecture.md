@@ -368,29 +368,217 @@ if (recovered.toLowerCase() !== order.seller.toLowerCase()) {
 
 ---
 
-## 파일 구조 (예상)
+## 파일 구조 (Phase 5 이후 최종)
 
 ```
-miniswap/
+p2pusdt/
 ├── contracts/
-│   ├── MiniSwapEscrow.sol
-│   └── test/
-│       └── Escrow.test.js
+│   ├── MiniSwapEscrow.sol          에스크로 컨트랙트
+│   └── test/MockERC20.sol          테스트 토큰
+├── test/
+│   └── MiniSwapEscrow.test.js      66 테스트 케이스
 ├── src/
+│   ├── App.jsx                     루트 (라우팅 + 상태 관리, 207줄)
+│   ├── constants.js                ABI, TradeStatus enum, USDT 주소
+│   ├── constants/
+│   │   └── network.js              Arbitrum 체인 ID, RPC, 지원 체인
 │   ├── components/
-│   │   ├── OrderBook/
-│   │   ├── TradeFlow/
-│   │   └── Profile/
+│   │   ├── AppShell.jsx            레이아웃 셸 (헤더 + 네트워크 배너 + 하단 네비)
+│   │   ├── HeroSection.jsx         랜딩 페이지 (지갑 미연결)
+│   │   ├── NetworkGuide.jsx        Arbitrum 네트워크 전환 가이드
+│   │   ├── TradeRoom.jsx           거래 진행 화면 (에스크로 + 채팅, 872줄)
+│   │   ├── TradeTimeline.jsx       5단계 거래 타임라인
+│   │   ├── EscrowBadge.jsx         에스크로 보호 상태 배지
+│   │   ├── OrderbookView.jsx       오더북 허브 (매도/매수/내 오더)
+│   │   ├── OrderDetail.jsx         오더 상세 + 수락 요청
+│   │   ├── SellOrderForm.jsx       매도 오더 생성 폼
+│   │   ├── BuyOrderForm.jsx        매수 오더 생성 폼
+│   │   ├── BuyerSelector.jsx       구매자 선택 (판매자 전용)
+│   │   ├── CreateTrade.jsx         에스크로 생성 (approve + deposit)
+│   │   ├── JoinTrade.jsx           거래 참여 (tradeId 검증)
+│   │   ├── TradeHistory.jsx        거래 내역 (IndexedDB + 온체인)
+│   │   ├── OnboardBanner.jsx       신규 사용자 온보딩 배너
+│   │   ├── WalletButton.jsx        지갑 연결/해제 버튼
+│   │   └── ui/                     shadcn/ui 스타일 기본 컴포넌트
+│   │       ├── button.jsx
+│   │       ├── card.jsx
+│   │       ├── badge.jsx
+│   │       ├── banner.jsx
+│   │       ├── stepper.jsx
+│   │       ├── input.jsx
+│   │       ├── tabs.jsx
+│   │       ├── dialog.jsx
+│   │       ├── alert.jsx
+│   │       ├── separator.jsx
+│   │       ├── toast.jsx
+│   │       └── avatar.jsx
 │   ├── hooks/
-│   │   ├── useMetaMask.js
-│   │   ├── useEscrow.js
-│   │   └── useOrderBook.js
-│   ├── lib/
-│   │   ├── trystero.js      ← P2P 오더북
-│   │   ├── indexeddb.js     ← 로컬 저장
-│   │   └── signature.js     ← 서명·검증
-│   └── App.jsx
-├── miniswap-v4.html         ← 인터랙티브 프로토타입
-├── README.md
-└── architecture.md
+│   │   ├── useAppRouter.js         view 문자열 결정
+│   │   ├── useTradeStateMachine.js  7개 UX 상태 + 시그널 기반 전이
+│   │   ├── useTradeEvents.js       이벤트 중계 + 구매자 자동 이동
+│   │   ├── useNetworkSwitch.js     MetaMask 네트워크 전환
+│   │   ├── useEscrow.js            스마트 컨트랙트 읽기/쓰기 훅
+│   │   ├── useOrderbook.js         Trystero P2P 오더북
+│   │   └── useXmtpChat.js          XMTP 1:1 채팅
+│   ├── contexts/
+│   │   ├── XmtpContext.jsx         XMTP 클라이언트 제공
+│   │   └── ToastContext.jsx        토스트 알림 제공
+│   └── lib/
+│       ├── utils.js                cn() (clsx + twMerge)
+│       └── indexeddb.js            거래 데이터 로컬 저장소
+├── architecture.md
+└── hardhat.config.cjs
 ```
+
+---
+
+## Phase 1-5 리빌딩 — 최종 컴포넌트 트리
+
+```
+<WagmiProvider>
+ <QueryClientProvider>
+  <XmtpProvider>
+   <ToastProvider>
+    <App>
+     ├── useAppRouter()          → view 결정
+     ├── useTradeStateMachine()  → (TradeRoom에서 사용)
+     ├── useTradeEvents()        → 이벤트 리스너
+     ├── useNetworkSwitch()      → 네트워크 전환
+     ├── useOrderbook()          → P2P 오더북
+     │
+     └── <AppShell showHeader showBottomNav ...>
+          ├── [Header]   로고 + WalletButton
+          ├── [Banner]   네트워크 경고 (wrongNetwork)
+          │
+          ├── renderContent(view) ─────────────────────
+          │   ├── 'loading'      → 스피너
+          │   ├── 'hero'         → <HeroSection />
+          │   ├── 'network'      → <NetworkGuide />
+          │   ├── 'trade-room'   → <TradeRoom>
+          │   │                       ├── <TradeTimeline /> (5단계)
+          │   │                       ├── <EscrowBadge />
+          │   │                       ├── 에스크로 카드
+          │   │                       ├── P2P 채팅 (XMTP)
+          │   │                       └── 액션 버튼
+          │   ├── 'create-trade' → <CreateTrade />
+          │   └── 'home'         → <OnboardBanner />
+          │                        + <OrderbookView /> | <TradeHistory />
+          │
+          └── [BottomNav]  홈 / 내 오더 / 거래내역 (home만)
+     </AppShell>
+    </App>
+   </ToastProvider>
+  </XmtpProvider>
+ </QueryClientProvider>
+</WagmiProvider>
+```
+
+---
+
+## 라우팅 구조 (useAppRouter)
+
+```
+wagmi status === 'reconnecting'  ──> 'loading'
+!isConnected                     ──> 'hero'
+wrongNetwork                     ──> 'network'
+activeTrade?.tradeId             ──> 'trade-room'
+createTradeOptions               ──> 'create-trade'
+(기본)                           ──> 'home'
+```
+
+**view 기반 레이아웃 제어 객체**
+
+| view | showHeader | showBottomNav |
+|------|:----------:|:-------------:|
+| loading | O | X |
+| hero | O | X |
+| network | O | X |
+| trade-room | O | X |
+| create-trade | O | X |
+| home | O | **O** |
+
+---
+
+## 거래 상태 머신 (useTradeStateMachine)
+
+### 온체인 → UX 상태 매핑
+
+```
+┌─────────────────── 온체인 TradeStatus ───────────────────┐
+│                                                           │
+│  LOCKED(0) ─── release() ──► RELEASED(1)                 │
+│     │                                                     │
+│     ├── dispute() ──► DISPUTED(2) ── adminResolve() ──►  │
+│     │                     │                               │
+│     │                     └── forceRefund(30d) ──►        │
+│     │                                                     │
+│     └── refund(7d) ──► REFUNDED(3)                       │
+│                                                           │
+└───────────────────────────────────────────────────────────┘
+                    │
+                    ▼  useTradeStateMachine 변환
+┌─────────────────── UX TradeState (7단계) ─────────────────┐
+│                                                            │
+│  AWAITING_ESCROW ──► ESCROW_LOCKED ──► KRW_SENT           │
+│   (trade 미수신)     (LOCKED,          (LOCKED,            │
+│                       시그널 없음)       구매자 시그널)      │
+│                                            │               │
+│                                            ▼               │
+│                                       CONFIRMING           │
+│                                      (LOCKED,              │
+│                                       판매자 확인)          │
+│                                            │               │
+│                           ┌────────────────┤               │
+│                           ▼                ▼               │
+│                      COMPLETED        REFUNDED             │
+│                     (RELEASED)       (REFUNDED)            │
+│                                                            │
+│  분기: LOCKED → dispute() → DISPUTED                      │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
+```
+
+### TradeTimeline 5단계 매핑
+
+```
+ [0]           [1]           [2]            [3]           [4]
+  O ─────────── O ─────────── O ──────────── O ─────────── O
+  │             │             │              │             │
+ Lock      ShieldCheck  ArrowLeftRight  SearchCheck    CheckCheck
+에스크로     USDT         KRW            입금           거래
+ 생성        잠금          송금           확인           완료
+```
+
+| stepIndex | TradeState | 색상 | 애니메이션 |
+|:---------:|-----------|------|:---------:|
+| 0 | AWAITING_ESCROW | primary (blue) | pulse |
+| 1 | ESCROW_LOCKED | primary (blue) | pulse |
+| 2 | KRW_SENT | primary (blue) | pulse |
+| 2 | DISPUTED | destructive (red) | pulse |
+| 3 | CONFIRMING | primary (blue) | pulse |
+| 4 | COMPLETED | success (green) | - |
+| 4 | REFUNDED | info (blue) | - |
+
+### EscrowBadge 상태별 표시
+
+| TradeStatus | 텍스트 | 아이콘 | 색상 | 애니메이션 |
+|-------------|--------|--------|------|:---------:|
+| LOCKED | 에스크로 보호 중 | Shield | emerald | pulse |
+| RELEASED | 거래 완료 | ShieldCheck | emerald | - |
+| REFUNDED | 환불 완료 | Undo2 | blue | - |
+| DISPUTED | 분쟁 검토 중 | ShieldAlert | red | - |
+
+---
+
+## Phase 1-5 변경 이력
+
+| Phase | 작업 | 생성 파일 | App.jsx |
+|:-----:|------|----------|:-------:|
+| 1 | HeroSection 분리 | HeroSection.jsx | 402→328 |
+| 2 | 네트워크 로직 통합 | constants/network.js, useNetworkSwitch.js | 328→280 |
+| 3 | 라우팅 리팩토링 | useAppRouter.js | 280→276 |
+| 4 | AppShell + 이벤트 분리 | AppShell.jsx, useTradeEvents.js | 276→207 |
+| 5 | 상태 머신 + 신뢰 UX | useTradeStateMachine.js, TradeTimeline.jsx, EscrowBadge.jsx | 207 |
+
+**App.jsx: 402 → 207줄 (48.5% 축소)**
+**TradeRoom.jsx: 912 → 872줄 (40줄 감소)**

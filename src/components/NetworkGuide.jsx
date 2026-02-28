@@ -13,25 +13,11 @@
  */
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
+import { useNetworkSwitch } from '../hooks/useNetworkSwitch'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-
-/** Arbitrum One 체인 ID (16진수) */
-const ARBITRUM_CHAIN_ID = '0xA4B1' // 42161
-
-/**
- * MetaMask wallet_addEthereumChain API에 전달할 Arbitrum One 네트워크 파라미터.
- * Arbitrum이 지갑에 등록되지 않은 경우(에러코드 4902) 이 값으로 자동 추가를 시도한다.
- */
-const ARBITRUM_PARAMS = {
-  chainId: ARBITRUM_CHAIN_ID,
-  chainName: 'Arbitrum One',
-  rpcUrls: ['https://arb1.arbitrum.io/rpc'],
-  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  blockExplorerUrls: ['https://arbiscan.io'],
-}
 
 /**
  * NetworkGuide (기본 내보내기)
@@ -41,56 +27,9 @@ const ARBITRUM_PARAMS = {
  */
 export default function NetworkGuide() {
   const { chain } = useAccount()
+  const { switchNetwork, switching, error } = useNetworkSwitch()
   // 수동 추가 방법 안내 섹션 토글 여부
   const [showManual, setShowManual] = useState(false)
-  // 네트워크 전환 요청 진행 중 여부 (버튼 비활성화용)
-  const [switching, setSwitching] = useState(false)
-  // 전환 실패 시 사용자에게 표시할 오류 메시지
-  const [error, setError] = useState(null)
-
-  /**
-   * MetaMask API를 통해 Arbitrum One으로 네트워크 자동 전환을 시도한다.
-   *
-   * 전환 흐름:
-   *   1. wallet_switchEthereumChain 요청
-   *   2. 에러코드 4902(미등록 체인): wallet_addEthereumChain으로 추가 시도
-   *   3. 에러코드 4001(사용자 거절): 취소 안내 메시지 표시
-   *   4. 기타 오류: 수동 추가 안내 메시지 표시
-   */
-  async function handleSwitch() {
-    if (!window.ethereum) {
-      setError('MetaMask가 설치되어 있지 않습니다.')
-      return
-    }
-    setSwitching(true)
-    setError(null)
-    try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: ARBITRUM_CHAIN_ID }],
-      })
-    } catch (err) {
-      // 4902 = chain not added yet
-      if (err.code === 4902) {
-        try {
-          // 지갑에 Arbitrum 네트워크가 없으면 자동으로 추가 시도
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [ARBITRUM_PARAMS],
-          })
-        } catch (addErr) {
-          setError('네트워크 추가가 취소되었습니다. 수동으로 추가해 주세요.')
-        }
-      } else if (err.code === 4001) {
-        // 사용자가 MetaMask 팝업에서 거절한 경우
-        setError('전환이 취소되었습니다.')
-      } else {
-        setError('네트워크 전환에 실패했습니다. 수동으로 추가해 주세요.')
-      }
-    } finally {
-      setSwitching(false)
-    }
-  }
 
   return (
     <div className="flex flex-col items-center gap-4 px-4 py-6 max-w-md mx-auto w-full">
@@ -120,7 +59,7 @@ export default function NetworkGuide() {
         variant="info"
         size="lg"
         className="w-full"
-        onClick={handleSwitch}
+        onClick={switchNetwork}
         disabled={switching}
       >
         {switching ? '전환 중...' : 'Arbitrum One으로 전환하기'}

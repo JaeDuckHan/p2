@@ -13,7 +13,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:     'bg-primary-600 text-white hover:bg-primary-700 shadow-sm',
+        default:     'bg-primary-700 text-white hover:bg-primary-800 shadow-sm',
         success:     'bg-success text-white hover:bg-success-dark shadow-sm',
         info:        'bg-info text-white hover:bg-info-dark shadow-sm',
         warning:     'bg-warning text-white hover:bg-warning-dark shadow-sm',
@@ -23,9 +23,9 @@ const buttonVariants = cva(
         link:        'text-primary-600 underline-offset-4 hover:underline',
       },
       size: {
-        sm:      'h-8 px-3 text-xs rounded-lg',
-        default: 'h-10 px-4 text-sm',
-        lg:      'h-12 px-6 text-base',
+        sm:      'h-10 px-4 text-sm rounded-lg',
+        default: 'h-12 px-5 text-base',
+        lg:      'h-14 px-6 text-lg',
       },
     },
     defaultVariants: {
