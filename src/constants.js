@@ -183,6 +183,7 @@ export const USDT_ABI = [
 export const USDT_ADDRESSES = {
   42161:  '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', // Arbitrum One
   421614: '0x3f14920c99BEB920Afa163031c4e47a3e03B3e4A', // Arbitrum Sepolia
+  137:    '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', // Polygon
 }
 
 export const USDT_DECIMALS = 6

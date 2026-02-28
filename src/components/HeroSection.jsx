@@ -7,6 +7,7 @@
 import { Shield, Zap, Coins } from 'lucide-react'
 import WalletButton from './WalletButton'
 import { Card } from '@/components/ui/card'
+import { LAYER_LABEL, LAYER_DESCRIPTION } from '../constants/network'
 
 export default function HeroSection() {
   return (
@@ -36,9 +37,9 @@ export default function HeroSection() {
         </Card>
         <Card className="p-4 flex flex-col items-center text-center gap-2 hover:shadow-xl transition-shadow duration-200">
           <Zap className="w-6 h-6 text-amber-600" />
-          <div className="text-sm font-semibold text-gray-900">Arbitrum L2</div>
+          <div className="text-sm font-semibold text-gray-900">{LAYER_LABEL}</div>
           <div className="text-xs text-gray-700 leading-snug">
-            이더리움 보안 + L2 속도, 수십 원으로 즉시 거래
+            {LAYER_DESCRIPTION}
           </div>
         </Card>
         <Card className="p-4 flex flex-col items-center text-center gap-2 hover:shadow-xl transition-shadow duration-200">

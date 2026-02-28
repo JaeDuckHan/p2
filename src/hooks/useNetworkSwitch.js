@@ -1,8 +1,8 @@
 /**
  * useNetworkSwitch — 네트워크 전환 커스텀 훅
  *
- * MetaMask를 통해 Arbitrum One 네트워크로 전환하는 로직을 캡슐화한다.
- * App.jsx(배너)와 NetworkGuide.jsx(전체 화면 가이드) 양쪽에서 사용한다.
+ * MetaMask를 통해 활성 네트워크로 전환하는 로직을 캡슐화한다.
+ * ACTIVE_NETWORK 설정에 따라 대상 네트워크가 자동 결정된다.
  *
  * 반환값:
  *   switchNetwork  — 네트워크 전환 요청 함수
@@ -10,7 +10,7 @@
  *   error          — 전환 실패 시 에러 메시지 (null이면 에러 없음)
  */
 import { useState } from 'react'
-import { ARBITRUM_CHAIN_ID_HEX, ARBITRUM_PARAMS } from '../constants/network'
+import { CHAIN_ID_HEX, CHAIN_PARAMS } from '../constants/network'
 
 export function useNetworkSwitch() {
   const [switching, setSwitching] = useState(false)
@@ -26,14 +26,14 @@ export function useNetworkSwitch() {
     try {
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: ARBITRUM_CHAIN_ID_HEX }],
+        params: [{ chainId: CHAIN_ID_HEX }],
       })
     } catch (err) {
       if (err.code === 4902) {
         try {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
-            params: [ARBITRUM_PARAMS],
+            params: [CHAIN_PARAMS],
           })
         } catch (_) {
           setError('네트워크 추가가 취소되었습니다. 수동으로 추가해 주세요.')

@@ -16,6 +16,7 @@ import { useState } from 'react'
 import { useAccount, useSwitchChain } from 'wagmi'
 import { useGetTrade, getEscrowAddress, formatUsdt } from '../hooks/useEscrow'
 import { TradeStatus, STATUS_LABEL } from '../constants'
+import { MAINNET_CHAIN_ID, CHAIN_NAME } from '../constants/network'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -76,9 +77,9 @@ export default function JoinTrade({ onJoined }) {
         <Alert variant="warning">
           <AlertDescription>
             <p className="font-semibold mb-1">네트워크 전환 필요</p>
-            <p className="mb-3">이 앱은 <strong>Arbitrum One</strong> 메인넷에서 동작합니다.</p>
-            <Button variant="warning" size="sm" onClick={() => switchChain({ chainId: 42161 })}>
-              Arbitrum One으로 전환
+            <p className="mb-3">이 앱은 <strong>{CHAIN_NAME}</strong> 메인넷에서 동작합니다.</p>
+            <Button variant="warning" size="sm" onClick={() => switchChain({ chainId: MAINNET_CHAIN_ID })}>
+              {CHAIN_NAME}으로 전환
             </Button>
           </AlertDescription>
         </Alert>

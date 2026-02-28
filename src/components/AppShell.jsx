@@ -11,6 +11,7 @@ import { AlertTriangle } from 'lucide-react'
 import WalletButton from './WalletButton'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { CHAIN_NAME } from '../constants/network'
 
 export default function AppShell({
   children,
@@ -57,7 +58,7 @@ export default function AppShell({
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
             <div>
-              <div className="text-sm font-semibold text-amber-800">Arbitrum One 네트워크 전환 필요</div>
+              <div className="text-sm font-semibold text-amber-800">{CHAIN_NAME} 네트워크 전환 필요</div>
               <div className="text-xs text-amber-600">USDT 거래를 위해 네트워크를 변경하세요</div>
             </div>
           </div>

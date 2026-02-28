@@ -26,6 +26,7 @@ import { putTrade } from '@/lib/indexeddb'
 import { useXmtpChat } from '../hooks/useXmtpChat'
 import { useXmtp } from '../contexts/XmtpContext'
 import { TradeStatus } from '../constants'
+import { getExplorerUrl, EXPLORER_NAME } from '../constants/network'
 import { useTradeStateMachine } from '../hooks/useTradeStateMachine'
 import TradeTimeline from './TradeTimeline'
 import EscrowBadge from './EscrowBadge'
@@ -62,16 +63,6 @@ import {
 function shortAddr(addr) {
   if (!addr) return '—'
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
-}
-
-/**
- * 체인 ID에 따른 Arbiscan 탐색기 기본 URL을 반환한다.
- * @param {number} cid - 체인 ID
- * @returns {string} Arbiscan 탐색기 URL
- */
-function getExplorerUrl(cid) {
-  if (cid === 421614) return 'https://sepolia.arbiscan.io'
-  return 'https://arbiscan.io'
 }
 
 /**
@@ -501,7 +492,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
                   rel="noopener noreferrer"
                   className="text-primary-600 flex items-center gap-1 hover:underline text-[11px] font-bold"
                 >
-                  Arbiscan에서 확인
+                  {EXPLORER_NAME}에서 확인
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>

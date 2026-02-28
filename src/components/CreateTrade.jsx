@@ -37,9 +37,7 @@ import { Stepper } from '@/components/ui/stepper'
 import { Input } from '@/components/ui/input'
 import { InputWithUnit } from '@/components/ui/input'
 import { useToast } from '@/contexts/ToastContext'
-
-// Arbitrum One 메인넷 체인 ID
-const MAINNET_CHAIN_ID = 42161
+import { MAINNET_CHAIN_ID, CHAIN_NAME } from '../constants/network'
 // approve 트랜잭션에 필요한 최소 ETH 잔액 (0.00005 ETH)
 const MIN_ETH_FOR_APPROVE = 50_000_000_000_000n // 0.00005 ETH — approve 가스비
 
@@ -138,7 +136,7 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
         <div>
           <div className="text-xl font-black text-slate-900 mb-2">잘못된 네트워크</div>
           <div className="text-sm text-slate-500 leading-relaxed mb-6">
-            <strong className="text-primary-600">Arbitrum One</strong> 메인넷으로 변경 필요
+            <strong className="text-primary-600">{CHAIN_NAME}</strong> 메인넷으로 변경 필요
           </div>
         </div>
         <Button variant="default" onClick={() => switchChain({ chainId: MAINNET_CHAIN_ID })}>

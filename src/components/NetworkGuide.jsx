@@ -14,6 +14,7 @@
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import { useNetworkSwitch } from '../hooks/useNetworkSwitch'
+import { CHAIN_NAME, CHAINLIST_SEARCH, BRIDGE_URL, BRIDGE_DOMAIN } from '../constants/network'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
@@ -35,10 +36,10 @@ export default function NetworkGuide() {
     <div className="flex flex-col items-center gap-4 px-4 py-6 max-w-md mx-auto w-full">
       <div className="text-4xl">&#x26A0;&#xFE0F;</div>
       <h2 className="text-xl font-bold text-slate-900 text-center">
-        Arbitrum 네트워크 연결이 필요합니다
+        {CHAIN_NAME} 네트워크 연결이 필요합니다
       </h2>
       <p className="text-sm text-slate-500 text-center">
-        MiniSwap은 <strong className="text-slate-700">Arbitrum One</strong> 네트워크에서 작동합니다.
+        MiniSwap은 <strong className="text-slate-700">{CHAIN_NAME}</strong> 네트워크에서 작동합니다.
       </p>
 
       {/* 현재 네트워크 vs 필요한 네트워크 비교 표시 */}
@@ -50,7 +51,7 @@ export default function NetworkGuide() {
         </div>
         <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
           <span className="text-xs text-slate-500">필요한 네트워크</span>
-          <span className="text-xs font-semibold text-emerald-700">Arbitrum One</span>
+          <span className="text-xs font-semibold text-emerald-700">{CHAIN_NAME}</span>
         </div>
       </div>
 
@@ -62,7 +63,7 @@ export default function NetworkGuide() {
         onClick={switchNetwork}
         disabled={switching}
       >
-        {switching ? '전환 중...' : 'Arbitrum One으로 전환하기'}
+        {switching ? '전환 중...' : `${CHAIN_NAME}으로 전환하기`}
       </Button>
 
       {/* 전환 오류 발생 시 사용자에게 메시지 표시 */}
@@ -111,7 +112,7 @@ export default function NetworkGuide() {
                   <span className="flex-none w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center mt-0.5">
                     2
                   </span>
-                  <span className="text-sm text-slate-700">검색창에 <strong>"Arbitrum"</strong> 입력</span>
+                  <span className="text-sm text-slate-700">검색창에 <strong>"{CHAINLIST_SEARCH}"</strong> 입력</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="flex-none w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center mt-0.5">
@@ -127,7 +128,7 @@ export default function NetworkGuide() {
           <Card>
             <CardContent className="pt-4">
               <div className="text-sm font-semibold text-slate-800 mb-3">
-                방법 2 — Arbitrum 공식 브릿지
+                방법 2 — {CHAIN_NAME} 공식 브릿지
               </div>
               <div className="flex flex-col gap-2">
                 <div className="flex items-start gap-2.5">
@@ -136,12 +137,12 @@ export default function NetworkGuide() {
                   </span>
                   <span className="text-sm text-slate-700">
                     <a
-                      href="https://bridge.arbitrum.io"
+                      href={BRIDGE_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary-600 underline underline-offset-2 hover:text-primary-800"
                     >
-                      bridge.arbitrum.io
+                      {BRIDGE_DOMAIN}
                     </a>
                     {' '}접속
                   </span>
