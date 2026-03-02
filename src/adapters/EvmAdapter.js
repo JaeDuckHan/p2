@@ -24,7 +24,7 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi'
  */
 export function useEvmAdapter() {
   const { address, isConnected, chain, chainId, connector } = useAccount()
-  const { connect, connectors, isPending, error: connectError } = useConnect()
+  const { connect, connectors, isPending, error: connectError, reset } = useConnect()
   const { disconnect } = useDisconnect()
 
   const injector = connectors.find(c => c.id === 'injected')
@@ -35,16 +35,12 @@ export function useEvmAdapter() {
     isConnected,
     isConnecting: isPending,
     connectError: connectError ?? null,
+    resetError: reset,
     connect: () => {
+      // 이전 에러 상태 초기화 후 연결 시도
+      reset()
       if (injector) {
-        connect(
-          { connector: injector },
-          {
-            onError: (err) => {
-              console.error('[EvmAdapter] 지갑 연결 실패:', err.message)
-            },
-          }
-        )
+        connect({ connector: injector })
       }
     },
     disconnect,

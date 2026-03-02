@@ -38,13 +38,13 @@ function Dialog({ open, onClose, onOpenChange, children }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={handleClose}
       />
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative z-50 animate-slide-up">{children}</div>
+      <div className="relative z-10 animate-slide-up w-full max-w-sm">
+        {children}
       </div>
     </div>
   )

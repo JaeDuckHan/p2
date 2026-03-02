@@ -253,16 +253,28 @@ function TronWalletModal({ onClose }) {
 
 // ── 메인 WalletButton ───────────────────────────────────────────────────────
 export default function WalletButton() {
-  const { address, isConnected, isConnecting, connect, disconnect, chain, isTronInstalled, connectError } = useWallet()
+  const { address, isConnected, isConnecting, connect, disconnect, chain, isTronInstalled, connectError, resetError } = useWallet()
   const { isEvm, isTron } = useNetwork()
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
 
-  // 연결 에러 발생 시 토스트 알림
+  // 연결 에러 발생 시 — 에러 유형별 분기 처리
   useEffect(() => {
-    if (connectError) {
-      toast('지갑 연결에 실패했습니다. 지갑 앱을 확인하고 다시 시도해 주세요.', 'error')
+    if (!connectError) return
+    const msg = connectError.message || ''
+    const name = connectError.name || ''
+
+    // 사용자가 직접 취소한 경우 → 무시
+    if (name === 'UserRejectedRequestError' || msg.includes('User rejected')) return
+
+    // 지갑(provider)을 찾을 수 없음 → 설치 모달
+    if (name === 'ConnectorNotFoundError' || msg.includes('provider') || msg.includes('Connector not found')) {
+      setShowModal(true)
+      return
     }
+
+    // 기타 에러 → 토스트
+    toast('지갑 연결에 실패했습니다. 페이지를 새로고침 후 다시 시도해 주세요.', 'error')
   }, [connectError, toast])
 
   // ── 연결된 상태 ────────────────────────────────────────────────
@@ -338,16 +350,20 @@ export default function WalletButton() {
   }
 
   // ── EVM 미연결: 데스크톱 또는 인앱 브라우저 ────────────────────
-  // wagmi connect()를 먼저 시도 — window.ethereum 체크 없이 직접 연결
-  // wagmi injected 커넥터가 지갑을 자동 감지한다
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      disabled={isConnecting}
-      onClick={() => connect()}
-    >
-      {isConnecting ? '연결 중…' : '지갑 연결'}
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={isConnecting}
+        onClick={() => {
+          if (resetError) resetError()
+          connect()
+        }}
+      >
+        {isConnecting ? '연결 중…' : '지갑 연결'}
+      </Button>
+      {showModal && <EvmWalletModal onClose={() => setShowModal(false)} />}
+    </>
   )
 }

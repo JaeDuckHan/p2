@@ -16,10 +16,7 @@ const ALL_CHAINS = [arbitrum, arbitrumSepolia, polygon, polygonAmoy]
 export const wagmiConfig = createConfig({
   chains: ALL_CHAINS,
   connectors: [
-    injected({
-      // MetaMask, Trust Wallet 등 인앱 브라우저 + 데스크톱 확장프로그램 모두 지원
-      shimDisconnect: true,
-    }),
+    injected(),
   ],
   transports: {
     [arbitrum.id]: http(),
