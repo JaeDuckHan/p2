@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 
 function Dialog({ open, onClose, onOpenChange, children }) {
@@ -37,16 +38,21 @@ function Dialog({ open, onClose, onOpenChange, children }) {
 
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
-        onClick={handleClose}
-      />
-      <div className="relative z-10 animate-slide-up w-full max-w-sm">
-        {children}
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm animate-fade-in"
+      onClick={handleClose}
+    >
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div
+          className="relative animate-slide-up w-full max-w-sm"
+          onClick={e => e.stopPropagation()}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
