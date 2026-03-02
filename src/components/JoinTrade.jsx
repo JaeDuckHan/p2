@@ -105,7 +105,7 @@ export default function JoinTrade({ onJoined }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-slate-500 uppercase">거래 ID (Trade ID)</label>
+        <label className="text-xs font-semibold text-slate-700 uppercase">거래 ID (Trade ID)</label>
         <Input
           className="font-mono"
           placeholder="0x1a2b3c... (판매자에게 받은 64자리 ID)"
@@ -134,24 +134,24 @@ export default function JoinTrade({ onJoined }) {
                   <Badge variant={STATUS_BADGE_VARIANT[status]}>
                     {STATUS_LABEL[status]}
                   </Badge>
-                  <span className="text-xs text-slate-500">거래 정보</span>
+                  <span className="text-xs text-slate-700">거래 정보</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <div>
-                    <div className="text-xs font-semibold text-slate-500 uppercase">금액</div>
+                    <div className="text-xs font-semibold text-slate-700 uppercase">금액</div>
                     <div className="text-sm font-semibold text-slate-900">{formatUsdt(trade.amount)} USDT</div>
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-slate-500 uppercase">수수료 (2%)</div>
+                    <div className="text-xs font-semibold text-slate-700 uppercase">수수료 (2%)</div>
                     <div className="text-sm font-semibold text-slate-900">{formatUsdt(trade.feeAmount)} USDT</div>
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-slate-500 uppercase">판매자</div>
+                    <div className="text-xs font-semibold text-slate-700 uppercase">판매자</div>
                     <div className="text-sm font-mono text-slate-900">{trade.seller.slice(0,10)}...{trade.seller.slice(-6)}</div>
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-slate-500 uppercase">구매자</div>
+                    <div className="text-xs font-semibold text-slate-700 uppercase">구매자</div>
                     <div className="text-sm font-mono text-slate-900">{trade.buyer.slice(0,10)}...{trade.buyer.slice(-6)}</div>
                   </div>
                 </div>
