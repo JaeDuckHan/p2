@@ -33,20 +33,19 @@ export default function AppShell({
 
       {/* ── 헤더 ─────────────────────────────────────────────────────── */}
       {showHeader && (
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-5 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-3 py-2.5 flex items-center justify-between gap-2 overflow-hidden">
+          <div className="flex items-center gap-1.5 min-w-0">
             <button
-              className="flex items-center gap-3 cursor-pointer"
+              className="flex items-center gap-2 cursor-pointer shrink-0"
               onClick={onLogoClick}
             >
-              <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-base select-none">
+              <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-sm select-none shrink-0">
                 M
               </div>
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-base font-bold text-slate-900">
+              <div className="hidden sm:flex flex-col items-start leading-none">
+                <span className="text-sm font-bold text-slate-900">
                   Mini<span className="text-primary-600">Swap</span>
                 </span>
-                <span className="text-xs text-gray-700 font-normal mt-0.5">P2P USDT ↔ KRW</span>
               </div>
             </button>
             <NetworkSelector />
