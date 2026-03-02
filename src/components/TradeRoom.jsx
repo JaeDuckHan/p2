@@ -190,10 +190,10 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
   const isRefundable = useIsRefundable(tradeId, chainId)
 
   /** 가스비 대납 릴리즈 릴레이 훅 — 판매자가 USDT를 구매자에게 전송할 때 사용 */
-  const { release, isPending: relPending, isConfirming: relConfirming, isSuccess: relSuccess, error: relErr } = useRelayRelease(chainId)
+  const { release, hash: relHash, isPending: relPending, isConfirming: relConfirming, isSuccess: relSuccess, error: relErr } = useRelayRelease(chainId)
 
   /** 가스비 대납 환불 릴레이 훅 — 에스크로 만료 후 판매자가 USDT를 돌려받을 때 사용 */
-  const { refund,  isPending: refPending, isConfirming: refConfirming, isSuccess: refSuccess, error: refErr } = useRelayRefund(chainId)
+  const { refund, hash: refHash, isPending: refPending, isConfirming: refConfirming, isSuccess: refSuccess, error: refErr } = useRelayRefund(chainId)
 
   /** 가스비 대납 분쟁 릴레이 훅 — 거래 당사자가 분쟁을 접수할 때 사용 */
   const { dispute, isPending: disPending, isConfirming: disConfirming, isSuccess: disSuccess, error: disErr } = useRelayDispute(chainId)
@@ -462,7 +462,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
             </div>
           </div>
 
-          {/* 거래 정보 카드 (txHash는 useGetTrade에서 미노출 — 거래 ID로 대체) */}
+          {/* 거래 정보 카드 — txHash 우선, 없으면 address fallback */}
           <Card className="w-full max-w-sm">
             <CardContent className="pt-4">
               <div className="text-xs font-semibold text-slate-700 uppercase mb-2">거래 정보</div>
@@ -489,12 +489,15 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
               <div className="flex justify-between text-xs mt-1.5">
                 <span className="text-slate-700">탐색기</span>
                 <a
-                  href={getExplorerUrl(networkKey, { type: 'address', value: address })}
+                  href={getExplorerUrl(networkKey, (relHash || refHash)
+                    ? { type: 'tx', value: relHash || refHash }
+                    : { type: 'address', value: address }
+                  )}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-600 flex items-center gap-1 hover:underline text-xs font-bold"
                 >
-                  {network.explorerName}에서 확인
+                  {(relHash || refHash) ? 'TX 확인' : `${network.explorerName}에서 확인`}
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>

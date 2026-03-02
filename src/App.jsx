@@ -16,17 +16,18 @@
  *   activeTrade — 현재 진행중인 거래 정보 (tradeId, role)
  *   page        — 현재 탭 (orderbook | my-orders | history)
  */
-import { useState } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useAccount } from 'wagmi'
 import { Home, ClipboardList, ScrollText, ArrowLeft } from 'lucide-react'
 import AppShell       from './components/AppShell'
 import HeroSection    from './components/HeroSection'
 import NetworkGuide   from './components/NetworkGuide'
 import OnboardBanner  from './components/OnboardBanner'
-import TradeRoom      from './components/TradeRoom'
 import OrderbookView  from './components/OrderbookView'
-import TradeHistory   from './components/TradeHistory'
-import CreateTrade    from './components/CreateTrade'
+
+const TradeRoom    = lazy(() => import('./components/TradeRoom'))
+const TradeHistory = lazy(() => import('./components/TradeHistory'))
+const CreateTrade  = lazy(() => import('./components/CreateTrade'))
 import { useOrderbook } from './hooks/useOrderbook'
 import { useNetworkSwitch } from './hooks/useNetworkSwitch'
 import { useAppRouter } from './hooks/useAppRouter'
@@ -34,6 +35,7 @@ import { useTradeEvents } from './hooks/useTradeEvents'
 import { useWallet } from './contexts/WalletContext'
 import { useNetwork } from './contexts/NetworkContext'
 import { getSupportedChainIds } from './constants/network'
+import { useToast } from '@/contexts/ToastContext'
 import { Button } from '@/components/ui/button'
 
 /** MiniSwap 루트 컴포넌트 */
@@ -48,7 +50,12 @@ export default function App() {
   const [createTradeOptions, setCreateTradeOptions] = useState(null)
 
   const orderbook = useOrderbook({ enabled: isConnected })
-  const { switchNetwork, switching: networkSwitching } = useNetworkSwitch()
+  const { switchNetwork, switching: networkSwitching, error: networkError } = useNetworkSwitch()
+  const toast = useToast()
+
+  useEffect(() => {
+    if (networkError) toast(networkError, 'error')
+  }, [networkError])
 
   // EVM: 지갑 체인이 현재 네트워크의 지원 체인 목록에 없으면 경고
   // Tron: 네트워크 불일치 개념 없음
@@ -190,7 +197,13 @@ export default function App() {
       onSwitchNetwork={switchNetwork}
       networkSwitching={networkSwitching}
     >
-      {renderContent()}
+      <Suspense fallback={
+        <div className="flex items-center justify-center py-24">
+          <div className="animate-spin w-10 h-10 border-3 border-primary-600 border-t-transparent rounded-full" />
+        </div>
+      }>
+        {renderContent()}
+      </Suspense>
     </AppShell>
   )
 }

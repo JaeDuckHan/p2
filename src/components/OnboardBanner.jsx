@@ -61,12 +61,12 @@ export default function OnboardBanner() {
   // USDT 잔액이 있으면 2단계(거래 시작)로, 없으면 1단계(USDT 준비)로 표시
   const currentStep = hasFunds ? 2 : 1
 
-  // 각 단계 레이블 (HTML 태그 포함 가능)
+  // 각 단계 레이블 (React 노드)
   // USDT 잔액이 0인 경우 현재 잔액을 작은 글씨로 함께 표시
   const steps = [
-    '지갑<br/>연결',
-    `USDT<br/>준비${!hasFunds ? `<br/><span style="font-size:9px;color:#f59e0b">${formatUsdt(balance)}</span>` : ''}`,
-    '거래<br/>시작',
+    <>지갑<br/>연결</>,
+    <>USDT<br/>준비{!hasFunds && <><br/><span className="text-[9px] text-amber-400">{formatUsdt(balance)}</span></>}</>,
+    <>거래<br/>시작</>,
   ]
 
   return (

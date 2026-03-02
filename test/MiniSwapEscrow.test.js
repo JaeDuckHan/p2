@@ -89,7 +89,7 @@ async function depositAndGetTradeId(escrow, usdt, seller, buyer, amount) {
 // ══════════════════════════════════════════════════════════════════
 
 async function deployFixture() {
-    const [owner, seller, buyer, admin1, admin2, feeRecipient, attacker, stranger] =
+    const [owner, seller, buyer, admin1, admin2, feeRecipient, attacker, stranger, relayer] =
         await ethers.getSigners();
 
     // MockERC20 (USDT 대역)
@@ -102,7 +102,8 @@ async function deployFixture() {
         usdt.target,
         feeRecipient.address,
         admin1.address,
-        admin2.address
+        admin2.address,
+        relayer.address
     );
 
     // 판매자에게 USDT 발행
@@ -112,7 +113,7 @@ async function deployFixture() {
         escrow, usdt,
         owner, seller, buyer,
         admin1, admin2, feeRecipient,
-        attacker, stranger,
+        attacker, stranger, relayer,
     };
 }
 
@@ -148,13 +149,14 @@ describe("MiniSwapEscrow", function () {
     describe("1. Deployment", function () {
 
         it("immutable 변수가 올바르게 설정된다", async function () {
-            const { escrow, usdt, feeRecipient, admin1, admin2 } =
+            const { escrow, usdt, feeRecipient, admin1, admin2, relayer } =
                 await loadFixture(deployFixture);
 
             expect(await escrow.usdt()).to.equal(usdt.target);
             expect(await escrow.feeRecipient()).to.equal(feeRecipient.address);
             expect(await escrow.admin1()).to.equal(admin1.address);
             expect(await escrow.admin2()).to.equal(admin2.address);
+            expect(await escrow.relayer()).to.equal(relayer.address);
         });
 
         it("상수 값이 설계 명세와 일치한다 (7일, 2%, 30일)", async function () {
@@ -166,48 +168,61 @@ describe("MiniSwapEscrow", function () {
         });
 
         it("usdt 가 address(0) 이면 ZeroAddress revert", async function () {
-            const [, , , admin1, admin2, feeRecipient] = await ethers.getSigners();
+            const [, , , admin1, admin2, feeRecipient, , , relayer] = await ethers.getSigners();
             const Escrow = await ethers.getContractFactory("MiniSwapEscrow");
             await expect(
                 Escrow.deploy(
                     ethers.ZeroAddress, feeRecipient.address,
-                    admin1.address, admin2.address
+                    admin1.address, admin2.address, relayer.address
                 )
             ).to.be.revertedWithCustomError(Escrow, "ZeroAddress");
         });
 
         it("feeRecipient 가 address(0) 이면 ZeroAddress revert", async function () {
-            const [, , , admin1, admin2] = await ethers.getSigners();
+            const [, , , admin1, admin2, , , , relayer] = await ethers.getSigners();
             const MockERC20 = await ethers.getContractFactory("MockERC20");
             const u = await MockERC20.deploy("T", "T", 6);
             const Escrow = await ethers.getContractFactory("MiniSwapEscrow");
             await expect(
-                Escrow.deploy(u.target, ethers.ZeroAddress, admin1.address, admin2.address)
+                Escrow.deploy(u.target, ethers.ZeroAddress, admin1.address, admin2.address, relayer.address)
             ).to.be.revertedWithCustomError(Escrow, "ZeroAddress");
         });
 
         it("admin1 이 address(0) 이면 ZeroAddress revert", async function () {
-            const [, , , , admin2, feeRecipient] = await ethers.getSigners();
+            const [, , , , admin2, feeRecipient, , , relayer] = await ethers.getSigners();
             const MockERC20 = await ethers.getContractFactory("MockERC20");
             const u = await MockERC20.deploy("T", "T", 6);
             const Escrow = await ethers.getContractFactory("MiniSwapEscrow");
             await expect(
                 Escrow.deploy(
                     u.target, feeRecipient.address,
-                    ethers.ZeroAddress, admin2.address
+                    ethers.ZeroAddress, admin2.address, relayer.address
                 )
             ).to.be.revertedWithCustomError(Escrow, "ZeroAddress");
         });
 
         it("admin2 가 address(0) 이면 ZeroAddress revert", async function () {
-            const [, , , admin1, , feeRecipient] = await ethers.getSigners();
+            const [, , , admin1, , feeRecipient, , , relayer] = await ethers.getSigners();
             const MockERC20 = await ethers.getContractFactory("MockERC20");
             const u = await MockERC20.deploy("T", "T", 6);
             const Escrow = await ethers.getContractFactory("MiniSwapEscrow");
             await expect(
                 Escrow.deploy(
                     u.target, feeRecipient.address,
-                    admin1.address, ethers.ZeroAddress
+                    admin1.address, ethers.ZeroAddress, relayer.address
+                )
+            ).to.be.revertedWithCustomError(Escrow, "ZeroAddress");
+        });
+
+        it("relayer 가 address(0) 이면 ZeroAddress revert", async function () {
+            const [, , , admin1, admin2, feeRecipient] = await ethers.getSigners();
+            const MockERC20 = await ethers.getContractFactory("MockERC20");
+            const u = await MockERC20.deploy("T", "T", 6);
+            const Escrow = await ethers.getContractFactory("MiniSwapEscrow");
+            await expect(
+                Escrow.deploy(
+                    u.target, feeRecipient.address,
+                    admin1.address, admin2.address, ethers.ZeroAddress
                 )
             ).to.be.revertedWithCustomError(Escrow, "ZeroAddress");
         });

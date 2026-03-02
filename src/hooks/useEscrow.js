@@ -247,7 +247,7 @@ function useRelayAction(chainId) {
     setIsPending(false)
   }
 
-  return { relay, isPending, isConfirming, isSuccess, receipt, error, reset }
+  return { relay, hash, isPending, isConfirming, isSuccess, receipt, error, reset }
 }
 
 // ─── useRelayDeposit ──────────────────────────────────────────────────────────
@@ -274,9 +274,9 @@ export function useRelayDeposit(chainId) {
 
 // ─── useRelayRelease ──────────────────────────────────────────────────────────
 export function useRelayRelease(chainId) {
-  const { relay, isPending, isConfirming, isSuccess, error } = useRelayAction(chainId)
+  const { relay, hash, isPending, isConfirming, isSuccess, error } = useRelayAction(chainId)
   const release = (tradeId) => relay('release', { tradeId })
-  return { release, isPending, isConfirming, isSuccess, error }
+  return { release, hash, isPending, isConfirming, isSuccess, error }
 }
 
 // ─── useRelayDispute ──────────────────────────────────────────────────────────
@@ -288,9 +288,9 @@ export function useRelayDispute(chainId) {
 
 // ─── useRelayRefund ───────────────────────────────────────────────────────────
 export function useRelayRefund(chainId) {
-  const { relay, isPending, isConfirming, isSuccess, error } = useRelayAction(chainId)
+  const { relay, hash, isPending, isConfirming, isSuccess, error } = useRelayAction(chainId)
   const refund = (tradeId) => relay('refund', { tradeId })
-  return { refund, isPending, isConfirming, isSuccess, error }
+  return { refund, hash, isPending, isConfirming, isSuccess, error }
 }
 
 // ─── useEthBalance + useRequestDrip ──────────────────────────────────────────

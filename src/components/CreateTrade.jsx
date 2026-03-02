@@ -173,7 +173,7 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
     <div className="flex flex-col gap-4">
       {/* 단계 표시기: USDT 승인 → 에스크로 예치 */}
       <Stepper
-        steps={['USDT<br/>승인', '에스크로<br/>예치']}
+        steps={[<>USDT<br/>승인</>, <>에스크로<br/>예치</>]}
         current={stepperCurrent}
         className="pb-1"
       />

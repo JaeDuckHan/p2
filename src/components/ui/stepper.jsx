@@ -3,9 +3,9 @@
  * 수평 스텝 인디케이터로 완료(초록 체크)/진행중(파란 링)/대기(회색) 상태를 표시합니다.
  * 각 단계 사이에 연결선(커넥터)이 표시되며, 완료된 단계는 초록으로 채워집니다.
  *
- * @param {Array<string>} steps   - 단계 레이블 배열 (HTML 문자열 허용, dangerouslySetInnerHTML 사용)
- * @param {number}        current - 현재 진행 중인 단계 인덱스 (0부터 시작)
- * @param {string}        [className]
+ * @param {Array<React.ReactNode>} steps   - 단계 레이블 배열 (React 노드)
+ * @param {number}                 current - 현재 진행 중인 단계 인덱스 (0부터 시작)
+ * @param {string}                 [className]
  */
 
 import { cn } from '@/lib/utils'
@@ -44,8 +44,9 @@ function Stepper({ steps, current = 0, className }) {
                   isActive && 'text-primary-700 font-semibold',
                   !isDone && !isActive && 'text-slate-600'
                 )}
-                dangerouslySetInnerHTML={{ __html: label }}
-              />
+              >
+                {label}
+              </span>
             </div>
             {/* Connector */}
             {!isLast && (
