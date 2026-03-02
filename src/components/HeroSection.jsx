@@ -87,7 +87,7 @@ export default function HeroSection() {
                 </div>
               </div>
               {i < arr.length - 1 && (
-                <div className="text-gray-400 text-base mt-2 mx-0.5">→</div>
+                <div className="text-gray-600 text-base mt-2 mx-0.5">→</div>
               )}
             </div>
           ))}

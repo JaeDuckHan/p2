@@ -47,17 +47,17 @@ export default function TradeTimeline({ stepIndex = 0, state }) {
           isActive && !disputeActive && !refundDone && 'bg-primary-600 text-white ring-2 ring-primary-200 animate-pulse',
           disputeActive && 'bg-red-500 text-white ring-2 ring-red-200 animate-pulse',
           refundDone && 'bg-blue-500 text-white ring-2 ring-blue-200',
-          !isDone && !isActive && 'bg-slate-100 text-slate-400',
+          !isDone && !isActive && 'bg-slate-100 text-slate-600',
         )
 
         /** 레이블 텍스트 색상 */
         const labelClass = cn(
-          'text-[10px] leading-tight text-center whitespace-pre-line max-w-[52px] mt-1.5',
+          'text-xs leading-tight text-center whitespace-pre-line max-w-[52px] mt-1.5',
           isDone && 'text-success-dark font-medium',
           isActive && !disputeActive && !refundDone && 'text-primary-700 font-semibold',
           disputeActive && 'text-red-600 font-semibold',
           refundDone && 'text-blue-600 font-semibold',
-          !isDone && !isActive && 'text-slate-400',
+          !isDone && !isActive && 'text-slate-600',
         )
 
         /** 커넥터 라인 색상 */

@@ -43,9 +43,9 @@ function ToastItem({ toast, onDismiss }) {
       <span className="text-sm font-medium flex-1">{toast.message}</span>
       <button
         onClick={() => onDismiss(toast.id)}
-        className="shrink-0 p-0.5 rounded hover:bg-black/5 transition-colors cursor-pointer"
+        className="shrink-0 p-1.5 -mr-1 rounded-lg hover:bg-black/5 transition-colors cursor-pointer"
       >
-        <XCircle className="w-3.5 h-3.5 opacity-40" />
+        <XCircle className="w-4 h-4 opacity-70" />
       </button>
     </div>
   )

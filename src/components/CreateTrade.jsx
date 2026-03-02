@@ -137,7 +137,7 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
         </div>
         <div>
           <div className="text-xl font-black text-slate-900 mb-2">Tron 에스크로 준비 중</div>
-          <div className="text-sm text-slate-500 leading-relaxed">
+          <div className="text-sm text-slate-700 leading-relaxed">
             Tron 네트워크의 에스크로 서비스는 현재 준비 중입니다.<br />
             오더 게시 및 조회는 정상적으로 이용 가능합니다.
           </div>
@@ -155,7 +155,7 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
         </div>
         <div>
           <div className="text-xl font-black text-slate-900 mb-2">잘못된 네트워크</div>
-          <div className="text-sm text-slate-500 leading-relaxed mb-6">
+          <div className="text-sm text-slate-700 leading-relaxed mb-6">
             <strong className="text-primary-600">{network.name}</strong> 메인넷으로 변경 필요
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
 
       {/* 구매자 지갑 주소 입력 */}
       <div>
-        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+        <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
           구매자 지갑 주소
         </div>
         <Input
@@ -190,18 +190,18 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
           onChange={e => setBuyer(e.target.value.trim())}
         />
         {buyer && !buyerOk && (
-          <p className="text-[10px] text-red-500 mt-1">올바른 이더리움 주소를 입력하세요</p>
+          <p className="text-xs text-red-500 mt-1">올바른 이더리움 주소를 입력하세요</p>
         )}
         {selfTrade && (
-          <p className="text-[10px] text-red-500 mt-1">본인 주소는 구매자로 지정할 수 없습니다</p>
+          <p className="text-xs text-red-500 mt-1">본인 주소는 구매자로 지정할 수 없습니다</p>
         )}
       </div>
 
       {/* USDT 판매 금액 입력 */}
       <div>
-        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+        <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
           판매 금액
-          <span className="text-slate-500 font-normal normal-case ml-2">
+          <span className="text-slate-700 font-normal normal-case ml-2">
             잔액: {formatUsdt(balance)} USDT
           </span>
         </div>
@@ -220,19 +220,19 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
       {amountBig > 0n && (
         <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
           <div className="flex justify-between text-sm mb-1.5">
-            <span className="text-slate-500">거래 금액</span>
+            <span className="text-slate-700">거래 금액</span>
             <span className="font-extrabold text-slate-900">{formatUsdt(amountBig)} USDT</span>
           </div>
           <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-slate-500">
+            <span className="text-slate-700">
               수수료 (2%){' '}
-              <span className="text-[9px] text-emerald-600">CEX 대비 ~80% 저렴</span>
+              <span className="text-xs text-emerald-600">CEX 대비 ~80% 저렴</span>
             </span>
             <span className="text-red-500">−{formatUsdt(fee)} USDT</span>
           </div>
           <Separator className="my-2" />
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">총 필요 금액</span>
+            <span className="text-slate-700">총 필요 금액</span>
             <span className="font-extrabold text-slate-900">{formatUsdt(total)} USDT</span>
           </div>
           {!enoughBal && amountBig > 0n && (
@@ -248,7 +248,7 @@ export default function CreateTrade({ onCreated, prefillBuyer }) {
         <Banner variant="warning" icon="⚠️">
           <div className="mb-1.5">
             <strong>최초 1회 ETH 필요</strong> — USDT 승인 가스비<br />
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-700">
               현재 잔액: {formatEther(ethBalance).slice(0, 8)} ETH
             </span>
           </div>

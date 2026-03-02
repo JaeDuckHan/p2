@@ -40,6 +40,9 @@ export function WalletProvider({ children }) {
     evm,
     tron,
 
+    // 연결 에러 (EVM 전용, wagmi에서 제공)
+    connectError: active.connectError ?? null,
+
     // Tron 전용
     isTronInstalled: tron.isInstalled,
   }), [active, evm, tron, isEvm, isTron])

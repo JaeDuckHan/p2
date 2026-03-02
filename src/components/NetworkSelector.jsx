@@ -82,7 +82,7 @@ export default function NetworkSelector() {
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
       >
         <span className={cn(
-          'w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px] font-bold',
+          'w-5 h-5 rounded-md flex items-center justify-center text-white text-xs font-bold',
           NETWORK_COLORS[networkKey] ?? 'bg-slate-600'
         )}>
           {NETWORK_ICONS[networkKey] ?? '?'}
@@ -90,7 +90,7 @@ export default function NetworkSelector() {
         <span className="text-xs font-medium text-slate-700">
           {network.name}
         </span>
-        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
       </button>
 
       {/* ── 네트워크 선택 모달 ─────────────────────────────────────── */}
@@ -130,20 +130,20 @@ export default function NetworkSelector() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-semibold text-slate-900">{net.name}</span>
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                          <Badge variant="outline" className="text-xs px-1.5 py-0">
                             {net.tokenStandard}
                           </Badge>
                           {isActive && <Check className="w-4 h-4 text-primary-600 shrink-0" />}
                         </div>
-                        <div className="text-xs text-slate-500">{net.description}</div>
+                        <div className="text-xs text-slate-700">{net.description}</div>
                       </div>
                     </div>
 
                     {/* 특징 리스트 */}
                     <div className="flex flex-col gap-1 ml-11">
                       {net.features?.map((feat, i) => (
-                        <div key={i} className="text-[11px] text-slate-600 flex items-start gap-1.5">
-                          <span className="text-slate-400 mt-0.5 shrink-0">·</span>
+                        <div key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
+                          <span className="text-slate-600 mt-0.5 shrink-0">·</span>
                           <span>{feat}</span>
                         </div>
                       ))}
@@ -152,12 +152,12 @@ export default function NetworkSelector() {
                     {/* 가스비 + 지갑 경고 */}
                     <div className="flex items-center gap-2 mt-2 ml-11">
                       {net.gasInfo && (
-                        <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                        <span className="text-xs text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
                           {net.gasInfo}
                         </span>
                       )}
                       {net.walletWarning && (
-                        <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                        <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
                           {net.walletWarning}
                         </span>
                       )}

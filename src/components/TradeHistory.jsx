@@ -62,7 +62,7 @@ function TradeHistoryItem({ trade, address, onOpenTrade }) {
         {/* 상단: 상태 배지 + 거래 생성 날짜 */}
         <div className="flex items-center justify-between mb-2">
           <Badge variant={config.variant}>{config.label}</Badge>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-xs text-slate-600">
             {trade.createdAt ? new Date(trade.createdAt).toLocaleDateString('ko-KR') : '—'}
           </span>
         </div>
@@ -79,12 +79,12 @@ function TradeHistoryItem({ trade, address, onOpenTrade }) {
               {formatUsdt(amount)} USDT
             </span>
           </div>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-xs text-slate-600">
             {isSeller ? '📤 판매' : '📥 구매'}
           </span>
         </div>
         {/* 하단: 상대방 지갑 주소 (축약 표시) */}
-        <div className="mt-1.5 text-[11px] text-slate-400 font-mono">
+        <div className="mt-1.5 text-xs text-slate-600 font-mono">
           상대방: {peerAddr ? `${peerAddr.slice(0, 6)}…${peerAddr.slice(-4)}` : '—'}
         </div>
       </CardContent>
@@ -184,7 +184,7 @@ export default function TradeHistory({ onOpenTrade }) {
               // 선택된 탭: 주요 색상 배경 / 비선택 탭: 회색 배경
               filter === f.id
                 ? 'bg-primary-600 text-white'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             )}
             onClick={() => setFilter(f.id)}
           >
@@ -199,19 +199,19 @@ export default function TradeHistory({ onOpenTrade }) {
           {/* 총 거래 건수 */}
           <div className="bg-slate-50 rounded-lg p-2.5 text-center">
             <div className="text-lg font-bold text-slate-900">{totalCount}</div>
-            <div className="text-[11px] text-slate-500">총 거래</div>
+            <div className="text-xs text-slate-700">총 거래</div>
           </div>
           {/* 완료된 거래 건수 */}
           <div className="bg-emerald-50 rounded-lg p-2.5 text-center">
             <div className="text-lg font-bold text-emerald-700">{completedCount}</div>
-            <div className="text-[11px] text-emerald-600">완료</div>
+            <div className="text-xs text-emerald-600">완료</div>
           </div>
           {/* 완료율: 완료 건수 / 전체 건수 × 100 (소수점 반올림) */}
           <div className="bg-primary-50 rounded-lg p-2.5 text-center">
             <div className="text-lg font-bold text-primary-700">
               {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
             </div>
-            <div className="text-[11px] text-primary-600">완료율</div>
+            <div className="text-xs text-primary-600">완료율</div>
           </div>
         </div>
       )}
@@ -224,7 +224,7 @@ export default function TradeHistory({ onOpenTrade }) {
         </div>
       ) : filteredTrades.length === 0 ? (
         // 빈 상태: 필터에 해당하는 거래가 없을 때 안내 문구 표시
-        <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+        <div className="flex flex-col items-center justify-center py-12 text-slate-600">
           <span className="text-4xl mb-3">📜</span>
           <p className="text-sm font-medium">
             {filter === 'all' ? '아직 거래 내역이 없습니다' : '해당하는 거래가 없습니다'}

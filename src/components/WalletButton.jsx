@@ -10,13 +10,14 @@
  *     2. 미연결 + 모바일(일반 브라우저): MetaMask 딥링크 또는 설치 안내 모달
  *     3. 연결됨: 주소 축약 표시 + 클릭 시 연결 해제
  *   Tron 네트워크:
- *     1. TronLink 미설치: 설치 안내 모달
+ *     1. TronLink 미감지(일반 브라우저): 딥링크 + 설치 안내 모달
  *     2. 미연결: "지갑 연결" 버튼
  *     3. 연결됨: T-주소 축약 표시 + 클릭 시 연결 해제
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallet } from '../contexts/WalletContext'
 import { useNetwork } from '../contexts/NetworkContext'
+import { useToast } from '../contexts/ToastContext'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -47,6 +48,18 @@ function getMetaMaskDeepLink() {
   return `https://metamask.app.link/dapp/${dappUrl}`
 }
 
+/** TronLink 딥링크 생성 — TronLink 앱에서 현재 dApp을 열기 */
+function getTronLinkDeepLink() {
+  const dappUrl = window.location.href
+  const param = JSON.stringify({
+    url: dappUrl,
+    action: 'open',
+    protocol: 'tronlink',
+    version: '1.0',
+  })
+  return `tronlinkoutside://pull.activity?param=${encodeURIComponent(param)}`
+}
+
 // ── EVM 지갑 미설치 안내 모달 ──────────────────────────────────────────────
 function EvmWalletModal({ onClose }) {
   const mobile = isMobile()
@@ -66,7 +79,7 @@ function EvmWalletModal({ onClose }) {
           <>
             <Card className="mb-4">
               <CardContent className="pt-4">
-                <div className="text-sm font-semibold text-slate-700 mb-3">모바일 설치 방법</div>
+                <div className="text-sm font-semibold text-slate-800 mb-3">모바일 설치 방법</div>
                 <div className="flex flex-col gap-2">
                   {['앱스토어에서 MetaMask 또는 Trust Wallet 검색 후 설치',
                     '앱 실행 → 지갑 생성',
@@ -76,7 +89,7 @@ function EvmWalletModal({ onClose }) {
                       <span className="flex-none w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center mt-0.5">
                         {i + 1}
                       </span>
-                      <span className="text-sm text-slate-700">{text}</span>
+                      <span className="text-sm text-slate-800">{text}</span>
                     </div>
                   ))}
                 </div>
@@ -93,7 +106,7 @@ function EvmWalletModal({ onClose }) {
           <>
             <Card className="mb-4">
               <CardContent className="pt-4">
-                <div className="text-sm font-semibold text-slate-700 mb-3">데스크톱 설치 방법</div>
+                <div className="text-sm font-semibold text-slate-800 mb-3">데스크톱 설치 방법</div>
                 <div className="flex flex-col gap-2">
                   {['아래 버튼으로 Chrome 확장 설치',
                     '지갑에서 계정 생성 또는 복구',
@@ -103,7 +116,7 @@ function EvmWalletModal({ onClose }) {
                       <span className="flex-none w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center mt-0.5">
                         {i + 1}
                       </span>
-                      <span className="text-sm text-slate-700">{text}</span>
+                      <span className="text-sm text-slate-800">{text}</span>
                     </div>
                   ))}
                 </div>
@@ -119,7 +132,7 @@ function EvmWalletModal({ onClose }) {
             </a>
           </>
         )}
-        <p className="text-xs text-slate-400 text-center mt-3">
+        <p className="text-xs text-slate-700 text-center mt-3">
           설치 후 이 페이지를 새로고침하면 자동으로 연결 버튼이 활성화됩니다.
         </p>
       </DialogContent>
@@ -127,8 +140,10 @@ function EvmWalletModal({ onClose }) {
   )
 }
 
-// ── Tron 지갑 미설치 안내 모달 ──────────────────────────────────────────────
+// ── Tron 지갑 안내 모달 (모바일: 딥링크+설치 / 데스크톱: 확장 설치) ──────
 function TronWalletModal({ onClose }) {
+  const mobile = isMobile()
+
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="relative">
@@ -141,43 +156,96 @@ function TronWalletModal({ onClose }) {
           </DialogDescription>
         </DialogHeader>
 
-        <Card className="mb-4">
-          <CardContent className="pt-4">
-            <div className="text-sm font-semibold text-slate-700 mb-3">TronLink 설치 방법</div>
-            <div className="flex flex-col gap-2">
-              {(isMobile()
-                ? ['앱스토어에서 TronLink 검색 후 설치',
-                   'TronLink 앱 실행 → 지갑 생성',
-                   '앱 내 브라우저에서 이 사이트 접속']
-                : ['Chrome 웹스토어에서 TronLink 확장 설치',
-                   'TronLink에서 지갑 생성 또는 복구',
-                   '이 페이지 새로고침 후 지갑 연결 클릭']
-              ).map((text, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <span className="flex-none w-5 h-5 rounded-full bg-red-100 text-red-700 text-xs font-bold flex items-center justify-center mt-0.5">
-                    {i + 1}
-                  </span>
-                  <span className="text-sm text-slate-700">{text}</span>
+        {mobile ? (
+          <>
+            {/* 경로 A: TronLink이 이미 설치되어 있다면 */}
+            <Card className="mb-3">
+              <CardContent className="pt-4">
+                <div className="text-sm font-semibold text-slate-800 mb-3">
+                  TronLink이 이미 설치되어 있다면
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex flex-col gap-2">
+                  {['아래 버튼을 눌러 TronLink 앱을 여세요',
+                    'TronLink 앱 내 브라우저에서 이 사이트가 자동으로 열립니다',
+                    'TronLink에서 "연결" 버튼을 눌러 지갑을 연결하세요'
+                  ].map((text, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <span className="flex-none w-5 h-5 rounded-full bg-red-100 text-red-700 text-xs font-bold flex items-center justify-center mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-slate-800">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            <a
+              href={getTronLinkDeepLink()}
+              className={cn(buttonVariants({ variant: 'success' }), 'w-full mb-4')}
+            >
+              TronLink 앱에서 열기
+            </a>
 
-        {!isMobile() && (
-          <a
-            href="https://www.tronlink.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(buttonVariants({ variant: 'success' }), 'w-full')}
-          >
-            TronLink 설치 페이지 열기
-          </a>
+            {/* 경로 B: TronLink이 없다면 */}
+            <Card className="mb-3">
+              <CardContent className="pt-4">
+                <div className="text-sm font-semibold text-slate-800 mb-3">
+                  TronLink이 없다면
+                </div>
+                <div className="flex flex-col gap-2">
+                  {['앱스토어에서 TronLink 검색 후 설치',
+                    'TronLink 앱 실행 → 새 지갑 만들기',
+                    '지갑 생성 후 위의 "TronLink 앱에서 열기" 버튼 클릭'
+                  ].map((text, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <span className="flex-none w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-slate-800">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <p className="text-xs text-slate-700 text-center mt-3">
+              TronLink은 별도의 지갑 앱입니다. 반드시 TronLink 앱 내 브라우저에서
+              이 사이트에 접속해야 지갑 연결이 가능합니다.
+            </p>
+          </>
+        ) : (
+          <>
+            <Card className="mb-4">
+              <CardContent className="pt-4">
+                <div className="text-sm font-semibold text-slate-800 mb-3">TronLink 설치 방법</div>
+                <div className="flex flex-col gap-2">
+                  {['Chrome 웹스토어에서 TronLink 확장 설치',
+                    'TronLink에서 지갑 생성 또는 복구',
+                    '이 페이지 새로고침 후 지갑 연결 클릭'
+                  ].map((text, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <span className="flex-none w-5 h-5 rounded-full bg-red-100 text-red-700 text-xs font-bold flex items-center justify-center mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-slate-800">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            <a
+              href="https://www.tronlink.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(buttonVariants({ variant: 'success' }), 'w-full')}
+            >
+              TronLink 설치 페이지 열기
+            </a>
+            <p className="text-xs text-slate-700 text-center mt-3">
+              설치 후 이 페이지를 새로고침하면 자동으로 연결 버튼이 활성화됩니다.
+            </p>
+          </>
         )}
-
-        <p className="text-xs text-slate-400 text-center mt-3">
-          설치 후 이 페이지를 새로고침하면 자동으로 연결 버튼이 활성화됩니다.
-        </p>
       </DialogContent>
     </Dialog>
   )
@@ -185,21 +253,29 @@ function TronWalletModal({ onClose }) {
 
 // ── 메인 WalletButton ───────────────────────────────────────────────────────
 export default function WalletButton() {
-  const { address, isConnected, isConnecting, connect, disconnect, chain, isTronInstalled } = useWallet()
+  const { address, isConnected, isConnecting, connect, disconnect, chain, isTronInstalled, connectError } = useWallet()
   const { isEvm, isTron } = useNetwork()
+  const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
+
+  // 연결 에러 발생 시 토스트 알림
+  useEffect(() => {
+    if (connectError) {
+      toast('지갑 연결에 실패했습니다. 지갑 앱을 확인하고 다시 시도해 주세요.', 'error')
+    }
+  }, [connectError, toast])
 
   // ── 연결된 상태 ────────────────────────────────────────────────
   if (isConnected) {
     return (
       <div className="flex items-center gap-1.5">
         {isEvm && chain && (
-          <Badge variant="default" className="text-[9px] px-1.5 py-0.5">
+          <Badge variant="default" className="text-xs px-1.5 py-0.5">
             {chain.name}
           </Badge>
         )}
         {isTron && (
-          <Badge variant="default" className="text-[9px] px-1.5 py-0.5 bg-red-600">
+          <Badge variant="default" className="text-xs px-1.5 py-0.5 bg-red-600">
             Tron
           </Badge>
         )}

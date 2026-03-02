@@ -21,6 +21,7 @@ import { WalletProvider } from './contexts/WalletContext'
 import { XmtpProvider } from './contexts/XmtpContext'
 import { ToastProvider } from './contexts/ToastContext'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
 
 // React Query 클라이언트: 쿼리 재시도 1회, 2초 staletime
@@ -41,7 +42,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <WalletProvider>
             <XmtpProvider>
               <ToastProvider>
-                <App />
+                <ErrorBoundary>
+                  <App />
+                </ErrorBoundary>
               </ToastProvider>
             </XmtpProvider>
           </WalletProvider>

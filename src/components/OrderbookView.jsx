@@ -334,7 +334,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
           <div className="text-lg font-bold text-slate-900">
             {myOrdersOnly ? '내 오더' : '거래소'}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+          <div className="flex items-center gap-1.5 text-xs text-slate-700 mt-0.5">
             {/* P2P 연결 상태 인디케이터: 연결됨(초록 점멸) / 연결 중(회색) */}
             <span
               className={
@@ -369,7 +369,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
             P2P USDT ↔ KRW<br/>
             <span className="text-primary-600">안전한 에스크로</span> 기반 거래
           </div>
-          <div className="text-sm text-slate-500 mb-3">
+          <div className="text-sm text-slate-700 mb-3">
             스마트 컨트랙트가 자금을 보호합니다
           </div>
           <div className="flex gap-2">
@@ -394,7 +394,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
       </Card>
 
       {/* 실시간 통계: 전체 오더 수 + 접속 중인 피어 수 */}
-      <div className="flex gap-3 text-xs text-slate-500 px-4 mb-3">
+      <div className="flex gap-3 text-xs text-slate-700 px-4 mb-3">
         <div>
           📊 오더 <span className="text-primary-600 font-medium">{totalOrders}건</span>
         </div>
@@ -425,7 +425,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
       </Tabs>
 
       {/* 탭 설명 텍스트 */}
-      <div className="px-4 py-2 text-xs text-slate-500">
+      <div className="px-4 py-2 text-xs text-slate-700">
         {tab === 'sell' ? (
           <>🛡️ <strong className="text-amber-600">판매 오더</strong> — 에스크로 보호 하에 USDT 구매 가능</>
         ) : (
@@ -462,7 +462,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
 
       {/* 현재 탭의 오더 건수 표시 */}
       <div className="px-4 mb-2">
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-slate-700">
           {tab === 'sell' ? '📤' : '📥'} {tab === 'sell' ? '판매' : '구매'} 오더 · {orders.length}건
         </div>
       </div>
@@ -477,7 +477,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
           <div className="text-base font-semibold text-slate-700 mb-1">
             아직 등록된 {tab === 'sell' ? '판매' : '구매'} 오더가 없습니다
           </div>
-          <div className="text-sm text-slate-400 mb-4">
+          <div className="text-sm text-slate-600 mb-4">
             첫 번째 거래자가 되어보세요.<br/>
             지금 등록하면 상단에 노출됩니다.
           </div>
@@ -528,13 +528,13 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
                       </Avatar>
                       <div>
                         {/* 축약된 지갑 주소 */}
-                        <div className="text-xs font-mono text-slate-500">
+                        <div className="text-xs font-mono text-slate-700">
                           {shortAddr(ownerAddr)}
                         </div>
                         {/* 별점 및 평점 수치 */}
                         <div className="text-xs text-amber-500">
                           {renderStars(profile.rating)}{' '}
-                          <span className="text-slate-400">{profile.rating.toFixed(1)}</span>
+                          <span className="text-slate-600">{profile.rating.toFixed(1)}</span>
                         </div>
                       </div>
                     </div>
@@ -556,7 +556,7 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
                       <span className="text-xl font-bold text-slate-900">
                         {order.amount.toLocaleString()}
                       </span>
-                      <span className="text-sm text-slate-400 ml-1">USDT</span>
+                      <span className="text-sm text-slate-600 ml-1">USDT</span>
                     </div>
                     <div className="text-right">
                       {/* 총 원화 금액 (판매: 앰버, 구매: 블루) */}
@@ -564,14 +564,14 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
                         {formatKRW(totalKRW)}원
                       </div>
                       {/* USDT당 단가 */}
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-slate-600">
                         {formatKRW(order.priceKRW)}원/USDT
                       </div>
                     </div>
                   </div>
 
                   {/* 하단: 만료 시간 + 거래 횟수 + 액션 버튼 */}
-                  <div className="flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex items-center justify-between text-xs text-slate-600">
                     <div className="flex gap-3">
                       <span>⏱ {formatExpiry(order.expiry)}</span>
                       <span>거래 {profile.tradeCount}회</span>

@@ -27,7 +27,7 @@ const CardTitle = forwardRef(({ className, ...props }, ref) => (
 CardTitle.displayName = 'CardTitle'
 
 const CardDescription = forwardRef(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn('text-sm text-slate-500', className)} {...props} />
+  <p ref={ref} className={cn('text-sm text-slate-700', className)} {...props} />
 ))
 CardDescription.displayName = 'CardDescription'
 

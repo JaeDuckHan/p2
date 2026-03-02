@@ -148,14 +148,14 @@ export default function SellOrderForm({ onCreated, initialValues }) {
         <div>
           <div className="text-xs font-bold text-amber-500 mb-0.5">판매 가능 잔액</div>
           <div className="text-xl font-black tracking-tight">
-            — <span className="text-xs text-slate-400">USDT</span>
+            — <span className="text-xs text-slate-600">USDT</span>
           </div>
         </div>
         <div className="text-3xl">🦊</div>
       </div>
 
       {/* 판매 수량 입력 필드 */}
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">판매 수량</div>
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">판매 수량</div>
       <InputWithUnit
         type="number"
         step="any"
@@ -189,7 +189,7 @@ export default function SellOrderForm({ onCreated, initialValues }) {
       </div>
 
       {/* 원화 단가 입력 필드 (KRW/USDT) */}
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">원화 가격 (KRW/USDT)</div>
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">원화 가격 (KRW/USDT)</div>
       <InputWithUnit
         type="number"
         min="0"
@@ -204,11 +204,11 @@ export default function SellOrderForm({ onCreated, initialValues }) {
       {amountNum > 0 && priceNum > 0 && (
         <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-3">
           <div className="flex justify-between text-sm mb-1.5">
-            <span className="text-slate-500">총 수령 예상</span>
+            <span className="text-slate-700">총 수령 예상</span>
             <span className="font-extrabold text-lg">{formatKRW(totalKRW)}원</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-slate-500">수수료 2%</span>
+            <span className="text-slate-700">수수료 2%</span>
             {/* 수수료는 USDT에서 차감되므로 음수로 표시 */}
             <span className="text-red-500">−{feeUsdt} USDT</span>
           </div>
@@ -216,7 +216,7 @@ export default function SellOrderForm({ onCreated, initialValues }) {
       )}
 
       {/* 은행 계좌 입력 필드: 구매자 수락 후 상대방에게만 공개 */}
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">입금받을 계좌</div>
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">입금받을 계좌</div>
       <InputWithUnit
         type="text"
         placeholder="국민 12345-67-890 홍길동"
@@ -224,12 +224,12 @@ export default function SellOrderForm({ onCreated, initialValues }) {
         onChange={e => setBankAccount(e.target.value)}
         className="mb-1 text-xs"
       />
-      <div className="text-xs text-slate-400 mb-3">
+      <div className="text-xs text-slate-600 mb-3">
         구매자가 수락한 후에만 상대방에게 공개됩니다
       </div>
 
       {/* 오더 유효 시간 선택 버튼 그룹 */}
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">오더 유효 시간</div>
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">오더 유효 시간</div>
       <div className="flex gap-1.5 mb-4">
         {[
           { label: '6시간',  value: '360' },
@@ -267,7 +267,7 @@ export default function SellOrderForm({ onCreated, initialValues }) {
       >
         {signing ? '서명 중…' : isEditMode ? '수정 오더 올리기 →' : '오더 올리기 →'}
       </Button>
-      <div className="text-xs text-slate-400 text-center py-1.5">
+      <div className="text-xs text-slate-600 text-center py-1.5">
         {isEditMode ? '기존 오더는 자동 취소 후 새 오더로 교체됩니다' : '구매자 수락 후 에스크로 락 요청 · Gas 없음'}
       </div>
     </form>

@@ -95,15 +95,15 @@ export default function AppShell({
               <button
                 key={id}
                 className={cn(
-                  'flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors',
-                  isActive ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'
+                  'flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors',
+                  isActive ? 'text-primary-600' : 'text-slate-600 hover:text-slate-600'
                 )}
                 onClick={() => onPageChange(id)}
               >
                 <Icon
                   className={cn(
                     'w-5 h-5 transition-colors',
-                    isActive ? 'text-primary-600' : 'text-slate-400'
+                    isActive ? 'text-primary-600' : 'text-slate-600'
                   )}
                   strokeWidth={isActive ? 2.5 : 1.75}
                 />

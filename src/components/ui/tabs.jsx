@@ -36,7 +36,7 @@ function TabsTrigger({ value, children, className }) {
         'relative px-5 py-3 text-base font-medium transition-colors cursor-pointer',
         isActive
           ? 'text-primary-600'
-          : 'text-slate-500 hover:text-slate-700',
+          : 'text-slate-700 hover:text-slate-700',
         className
       )}
       onClick={() => ctx.onChange(value)}

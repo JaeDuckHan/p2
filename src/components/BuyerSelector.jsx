@@ -92,7 +92,7 @@ export default function BuyerSelector({ order, requests, onSelect, onReject }) {
       {/* 현재 판매 오더 요약 (수량, KRW 금액, 상태 배지) */}
       <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 mb-3.5">
         <div>
-          <div className="text-xs text-slate-400 mb-0.5">내 오더</div>
+          <div className="text-xs text-slate-600 mb-0.5">내 오더</div>
           <div className="text-lg font-black tracking-tight">
             {order.amount.toLocaleString()} USDT{' '}
             <span className="text-xs text-teal-600">{formatKRW(totalKRW)}원</span>
@@ -102,7 +102,7 @@ export default function BuyerSelector({ order, requests, onSelect, onReject }) {
       </div>
 
       {/* 수락 요청 건수 레이블 */}
-      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+      <div className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
         수락 요청 · {requests.length}건
       </div>
 
@@ -132,16 +132,16 @@ export default function BuyerSelector({ order, requests, onSelect, onReject }) {
                 </span>
                 {/* 첫 번째(가장 빠른) 요청자에게 추천 배지 표시 */}
                 {isFirst && (
-                  <Badge variant="success" className="text-[9px] px-1.5 py-0">추천</Badge>
+                  <Badge variant="success" className="text-xs px-1.5 py-0">추천</Badge>
                 )}
               </div>
               {/* 구매자 평점 (별점 + 숫자): TODO 실제 온체인 API 연동 필요 */}
               <div className="text-xs text-amber-500">
                 {renderStars(profile.rating)}{' '}
-                <span className="text-slate-400">{profile.rating.toFixed(1)}</span>
+                <span className="text-slate-600">{profile.rating.toFixed(1)}</span>
               </div>
               {/* 요청 시간 및 서명 확인 여부 */}
-              <div className="text-xs text-slate-400 mt-0.5">
+              <div className="text-xs text-slate-600 mt-0.5">
                 {formatTime(req.timestamp)} · 서명 ✓
               </div>
             </div>
@@ -159,7 +159,7 @@ export default function BuyerSelector({ order, requests, onSelect, onReject }) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-[10px] px-2.5 py-1 h-auto"
+                className="text-xs px-2.5 py-1 h-auto"
                 onClick={(e) => { e.stopPropagation(); onReject(req.buyer) }}
               >
                 거절

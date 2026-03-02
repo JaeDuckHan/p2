@@ -149,7 +149,7 @@ function MessageBubble({ msg }) {
   if (msg.type === 'sys') {
     return (
       <div className="flex justify-center my-1.5">
-        <div className="bg-slate-100 text-slate-500 text-[11px] rounded-full px-3 py-0.5">
+        <div className="bg-slate-100 text-slate-700 text-xs rounded-full px-3 py-0.5">
           — {msg.text} —
         </div>
       </div>
@@ -167,7 +167,7 @@ function MessageBubble({ msg }) {
       >
         {msg.text}
       </div>
-      <div className="text-[10px] text-slate-400 mt-0.5 px-1">
+      <div className="text-xs text-slate-600 mt-0.5 px-1">
         {fmtTime(msg.timestamp)}
       </div>
     </div>
@@ -455,7 +455,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
             <div className="text-3xl font-black text-slate-900 mb-1">
               {isReleased ? '거래 완료!' : '환불 완료!'}
             </div>
-            <div className="text-base text-slate-500 mt-1">
+            <div className="text-base text-slate-700 mt-1">
               {isReleased
                 ? `${formatUsdt(trade.amount)} USDT가 지갑으로 전송되었습니다`
                 : `${formatUsdt(trade.amount)} USDT가 판매자에게 반환되었습니다`}
@@ -465,34 +465,34 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
           {/* 거래 정보 카드 (txHash는 useGetTrade에서 미노출 — 거래 ID로 대체) */}
           <Card className="w-full max-w-sm">
             <CardContent className="pt-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase mb-2">거래 정보</div>
+              <div className="text-xs font-semibold text-slate-700 uppercase mb-2">거래 정보</div>
               <div className="flex justify-between text-xs mb-1.5">
-                <span className="text-slate-500">거래 ID</span>
+                <span className="text-slate-700">거래 ID</span>
                 <button
                   onClick={copyId}
-                  className="font-mono text-[11px] text-primary-600 flex items-center gap-1 hover:underline"
+                  className="font-mono text-xs text-primary-600 flex items-center gap-1 hover:underline"
                 >
                   {tradeId.slice(0, 10)}…{tradeId.slice(-6)}
                   <Copy className="w-3 h-3" />
                 </button>
               </div>
               <div className="flex justify-between text-xs mb-1.5">
-                <span className="text-slate-500">금액</span>
+                <span className="text-slate-700">금액</span>
                 <span className="font-bold">{formatUsdt(trade.amount)} USDT</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">상태</span>
+                <span className="text-slate-700">상태</span>
                 <Badge variant={isReleased ? 'success' : 'info'}>
                   {isReleased ? 'RELEASED' : 'REFUNDED'}
                 </Badge>
               </div>
               <div className="flex justify-between text-xs mt-1.5">
-                <span className="text-slate-500">탐색기</span>
+                <span className="text-slate-700">탐색기</span>
                 <a
                   href={getExplorerUrl(networkKey, { type: 'address', value: address })}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary-600 flex items-center gap-1 hover:underline text-[11px] font-bold"
+                  className="text-primary-600 flex items-center gap-1 hover:underline text-xs font-bold"
                 >
                   {network.explorerName}에서 확인
                   <ExternalLink className="w-3 h-3" />
@@ -502,7 +502,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
           </Card>
 
           {/* 자동 복귀 카운트다운 — 10초 후 onExit() 호출 */}
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-slate-600">
             {exitCountdown}초 후 오더북으로 돌아갑니다
           </div>
 
@@ -549,7 +549,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
       <div className="px-4 pt-3 pb-2">
         <TradeTimeline stepIndex={stepIndex} state={tradeState} />
         {stepGuidance && (
-          <div className="mt-2 text-center text-xs text-slate-500 bg-slate-50 rounded-lg py-1.5 px-3">
+          <div className="mt-2 text-center text-xs text-slate-700 bg-slate-50 rounded-lg py-1.5 px-3">
             {stepGuidance}
           </div>
         )}
@@ -563,7 +563,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
               <div className="text-amber-600 font-mono font-bold text-sm leading-tight">
                 {shortCountdown}
               </div>
-              <div className="text-amber-500 text-[10px] font-medium mt-0.5">남은시간</div>
+              <div className="text-amber-500 text-xs font-medium mt-0.5">남은시간</div>
             </div>
           </div>
         )}
@@ -583,7 +583,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
           {/* 거래 ID 복사 카드 */}
           <Card>
             <CardContent className="pt-3 pb-3">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+              <div className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
                 거래 ID
               </div>
               <button
@@ -592,7 +592,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
                 title="클릭하여 복사"
               >
                 <span className="font-mono text-xs text-slate-700 truncate">{tradeId}</span>
-                <span className="flex items-center gap-1 text-primary-600 text-[11px] font-bold shrink-0 group-hover:underline">
+                <span className="flex items-center gap-1 text-primary-600 text-xs font-bold shrink-0 group-hover:underline">
                   <Copy className="w-3 h-3" />
                   복사
                 </span>
@@ -605,25 +605,25 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
             <Card>
               <CardContent className="pt-3 pb-3 flex flex-col gap-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">거래 금액</span>
+                  <span className="text-slate-700">거래 금액</span>
                   <span className="font-extrabold text-[15px] text-slate-900">{formatUsdt(trade.amount)} USDT</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">수수료 (2%)</span>
+                  <span className="text-slate-700">수수료 (2%)</span>
                   <span className="font-bold text-slate-700">{formatUsdt(trade.feeAmount)} USDT</span>
                 </div>
                 <Separator className="my-0" />
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">판매자</span>
-                  <span className="font-mono text-[11px] font-bold text-slate-700">{shortAddr(trade.seller)}</span>
+                  <span className="text-slate-700">판매자</span>
+                  <span className="font-mono text-xs font-bold text-slate-700">{shortAddr(trade.seller)}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">구매자</span>
-                  <span className="font-mono text-[11px] font-bold text-slate-700">{shortAddr(trade.buyer)}</span>
+                  <span className="text-slate-700">구매자</span>
+                  <span className="font-mono text-xs font-bold text-slate-700">{shortAddr(trade.buyer)}</span>
                 </div>
                 {status === TradeStatus.LOCKED && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">만료까지</span>
+                    <span className="text-slate-700">만료까지</span>
                     <span className={cn('text-xs', countdownColorClass)}>{countdownText}</span>
                   </div>
                 )}
@@ -639,7 +639,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
                   <Shield className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span className="text-sm font-semibold text-emerald-700">에스크로 보호 시스템</span>
                 </div>
-                <div className="text-[11px] text-slate-500 leading-relaxed flex flex-col gap-1.5">
+                <div className="text-xs text-slate-700 leading-relaxed flex flex-col gap-1.5">
                   {/* 스마트 컨트랙트 잠금 안내 */}
                   <div className="flex items-start gap-2">
                     <span className="text-emerald-500 shrink-0 mt-0.5">&#x1F512;</span>
@@ -672,7 +672,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
             <CardContent className="pt-3 pb-3">
               {/* 채팅 헤더 — 연결 상태 표시 */}
               <div className="flex items-center justify-between mb-2.5">
-                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                <div className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                   P2P 채팅
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -680,7 +680,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
                     'w-2 h-2 rounded-full',
                     connected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'
                   )} />
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-xs text-slate-700">
                     {connected ? 'XMTP 연결됨' : xmtpReady ? '연결 중...' : 'XMTP 준비 중...'}
                   </span>
                 </div>
@@ -728,7 +728,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
               >
                 {messages.length === 0 && (
                   <div className="flex justify-center my-3">
-                    <div className="bg-slate-100 text-slate-400 text-[11px] rounded-full px-3 py-1">
+                    <div className="bg-slate-100 text-slate-600 text-xs rounded-full px-3 py-1">
                       {connected
                         ? '채팅 기록이 없습니다. 메시지를 보내보세요.'
                         : xmtpReady
@@ -843,7 +843,7 @@ export default function TradeRoom({ tradeId, initialRole, onExit, onGoToHistory 
 
           {/* 거래 데이터 로드 중 표시 */}
           {isLoading && (
-            <div className="text-sm text-slate-400 text-center py-4">
+            <div className="text-sm text-slate-600 text-center py-4">
               거래 데이터 로드 중...
             </div>
           )}

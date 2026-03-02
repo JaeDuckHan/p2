@@ -149,7 +149,7 @@ export default function BuyOrderForm({ onCreated, initialValues }) {
       </Banner>
 
       {/* 구매 수량 입력 필드 */}
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">구매 수량</div>
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">구매 수량</div>
       <InputWithUnit
         type="number"
         step="any"
@@ -179,7 +179,7 @@ export default function BuyOrderForm({ onCreated, initialValues }) {
       </div>
 
       {/* 원화 단가 입력 필드 (KRW/USDT) */}
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">원화 가격 (KRW/USDT)</div>
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">원화 가격 (KRW/USDT)</div>
       <InputWithUnit
         type="number"
         min="0"
@@ -194,11 +194,11 @@ export default function BuyOrderForm({ onCreated, initialValues }) {
       {amountNum > 0 && priceNum > 0 && (
         <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-3">
           <div className="flex justify-between text-sm mb-1.5">
-            <span className="text-slate-500">총 지급 예상</span>
+            <span className="text-slate-700">총 지급 예상</span>
             <span className="font-extrabold text-lg">{formatKRW(totalKRW)}원</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-slate-500">수수료 2%</span>
+            <span className="text-slate-700">수수료 2%</span>
             {/* 수수료는 USDT에서 차감되므로 음수로 표시 */}
             <span className="text-red-500">−{feeUsdt} USDT</span>
           </div>
@@ -206,13 +206,13 @@ export default function BuyOrderForm({ onCreated, initialValues }) {
       )}
 
       {/* 판매자 계좌 안내: 구매 오더에는 계좌 입력 없음, 판매자 수락 시 공개 */}
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">입금받을 판매자 계좌</div>
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">입금받을 판매자 계좌</div>
       <Banner variant="info" icon="ℹ️" className="mb-3">
         판매자 수락 시 계좌가 공개됩니다
       </Banner>
 
       {/* 오더 유효 시간 선택 버튼 그룹 */}
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">오더 유효 시간</div>
+      <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">오더 유효 시간</div>
       <div className="flex gap-1.5 mb-4">
         {[
           { label: '6시간',  value: '360' },
@@ -250,7 +250,7 @@ export default function BuyOrderForm({ onCreated, initialValues }) {
       >
         {signing ? '서명 중…' : isEditMode ? '수정 오더 올리기 →' : '구매 오더 올리기 →'}
       </Button>
-      <div className="text-xs text-slate-400 text-center py-1.5">
+      <div className="text-xs text-slate-600 text-center py-1.5">
         {isEditMode ? '기존 오더는 자동 취소 후 새 오더로 교체됩니다' : '판매자 매칭 후 알림이 옵니다 · Gas 없음'}
       </div>
     </form>

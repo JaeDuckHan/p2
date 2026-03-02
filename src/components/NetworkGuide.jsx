@@ -33,7 +33,7 @@ export default function NetworkGuide() {
         <h2 className="text-xl font-bold text-slate-900 text-center">
           TronLink 지갑 연결이 필요합니다
         </h2>
-        <p className="text-sm text-slate-500 text-center">
+        <p className="text-sm text-slate-700 text-center">
           Tron 네트워크는 <strong className="text-slate-700">TronLink</strong> 지갑으로 연결합니다.
         </p>
         <Card>
@@ -65,17 +65,17 @@ export default function NetworkGuide() {
       <h2 className="text-xl font-bold text-slate-900 text-center">
         {network.name} 네트워크 연결이 필요합니다
       </h2>
-      <p className="text-sm text-slate-500 text-center">
+      <p className="text-sm text-slate-700 text-center">
         MiniSwap은 <strong className="text-slate-700">{network.name}</strong> 네트워크에서 작동합니다.
       </p>
 
       <div className="w-full flex flex-col gap-2">
         <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 border border-slate-200">
-          <span className="text-xs text-slate-500">현재 네트워크</span>
+          <span className="text-xs text-slate-700">현재 네트워크</span>
           <span className="text-xs font-semibold text-red-600">{chain?.name || '알 수 없음'}</span>
         </div>
         <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
-          <span className="text-xs text-slate-500">필요한 네트워크</span>
+          <span className="text-xs text-slate-700">필요한 네트워크</span>
           <span className="text-xs font-semibold text-emerald-700">{network.name}</span>
         </div>
       </div>
@@ -97,7 +97,7 @@ export default function NetworkGuide() {
       )}
 
       <button
-        className="text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2 cursor-pointer transition-colors"
+        className="text-xs text-slate-700 hover:text-slate-700 underline underline-offset-2 cursor-pointer transition-colors"
         onClick={() => setShowManual(v => !v)}
       >
         {showManual ? '▲' : '▼'} 자동 전환이 안 되나요? (수동 추가 방법)

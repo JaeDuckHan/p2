@@ -187,7 +187,7 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
           {acceptResponse.bankAccount && (
             <Card>
               <CardContent className="pt-4">
-                <div className="text-xs font-semibold text-slate-500 uppercase mb-2">입금 계좌</div>
+                <div className="text-xs font-semibold text-slate-700 uppercase mb-2">입금 계좌</div>
                 <div className="font-mono text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
                   {acceptResponse.bankAccount}
                 </div>
@@ -203,7 +203,7 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
               거래방 입장
             </Button>
           ) : (
-            <p className="text-xs text-slate-500 text-center py-4">
+            <p className="text-xs text-slate-700 text-center py-4">
               판매자가 USDT를 에스크로에 예치하면 자동으로 거래방에 입장합니다...
             </p>
           )}
@@ -238,7 +238,7 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
           <span className={`text-4xl font-black tracking-tight ${isSellOrder ? 'text-blue-600' : 'text-amber-600'}`}>
             {order.amount.toLocaleString()}
           </span>
-          <span className="text-lg text-slate-400">USDT</span>
+          <span className="text-lg text-slate-600">USDT</span>
         </div>
         <div className={`text-xl font-bold mt-1.5 ${isSellOrder ? 'text-blue-600' : 'text-amber-600'}`}>
           {formatKRW(totalKRW)}원
@@ -260,7 +260,7 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
               {/* TODO: 실제 온체인 API 연동 필요 */}
               <div className="text-xs text-amber-500">
                 {renderStars(profile.rating)}{' '}
-                <span className="text-slate-400">{profile.rating.toFixed(1)}</span>
+                <span className="text-slate-600">{profile.rating.toFixed(1)}</span>
               </div>
             </div>
           </div>
@@ -268,19 +268,19 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
           <Separator />
 
           <div className="flex justify-between text-xs mb-2">
-            <span className="text-slate-500">{isSellOrder ? '구매 수량' : '판매 수량'}</span>
+            <span className="text-slate-700">{isSellOrder ? '구매 수량' : '판매 수량'}</span>
             <span className="font-extrabold text-[15px] text-slate-900">{order.amount.toLocaleString()} USDT</span>
           </div>
           <div className="flex justify-between text-xs mb-2">
-            <span className="text-slate-500">환율</span>
+            <span className="text-slate-700">환율</span>
             <span className="font-bold text-slate-900">{formatKRW(order.priceKRW)}원/USDT</span>
           </div>
           <div className="flex justify-between text-xs mb-2">
-            <span className="text-slate-500">유효기간</span>
+            <span className="text-slate-700">유효기간</span>
             <span className="font-bold text-slate-900">{formatExpiry(order.expiry)}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-slate-500">총 거래 금액</span>
+            <span className="text-slate-700">총 거래 금액</span>
             <span className={`font-extrabold ${isSellOrder ? 'text-blue-600' : 'text-amber-600'}`}>
               {formatKRW(totalKRW)}원
             </span>
@@ -346,7 +346,7 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
                 </span>
               </div>
               <p className="text-sm font-semibold text-slate-800 mb-1">판매자 응답 대기 중...</p>
-              <p className="text-xs text-slate-500">{formatElapsed(elapsedMs)}</p>
+              <p className="text-xs text-slate-700">{formatElapsed(elapsedMs)}</p>
             </CardContent>
           </Card>
 
@@ -363,7 +363,7 @@ export default function OrderDetail({ order, onAcceptSent, onCancel, acceptRespo
               </Button>
             </Banner>
           ) : (
-            <p className="text-xs text-slate-400 text-center">
+            <p className="text-xs text-slate-600 text-center">
               판매자가 요청을 확인하면 자동으로 다음 단계로 진행됩니다.
             </p>
           )}

@@ -12,7 +12,7 @@ const Input = forwardRef(({ className, type, ...props }, ref) => (
     type={type}
     className={cn(
       'flex h-12 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-base',
-      'placeholder:text-slate-400',
+      'placeholder:text-slate-600',
       'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
       'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50',
       'transition-colors',
@@ -29,7 +29,7 @@ const InputWithUnit = forwardRef(({ className, unit, ...props }, ref) => (
     <input
       className={cn(
         'flex h-12 w-full rounded-xl border border-slate-200 bg-white pl-4 pr-16 py-2.5 text-base font-medium',
-        'placeholder:text-slate-400',
+        'placeholder:text-slate-600',
         'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
         'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50',
         'transition-colors',
@@ -38,7 +38,7 @@ const InputWithUnit = forwardRef(({ className, unit, ...props }, ref) => (
       {...props}
     />
     {unit && (
-      <span className="absolute right-4 text-base font-medium text-slate-400 pointer-events-none">
+      <span className="absolute right-4 text-base font-medium text-slate-600 pointer-events-none">
         {unit}
       </span>
     )}

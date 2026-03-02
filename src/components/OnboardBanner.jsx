@@ -73,14 +73,14 @@ export default function OnboardBanner() {
     <Card className="relative animate-fade-in bg-white">
       {/* 닫기 버튼: 클릭 시 배너를 영구적으로 숨김 */}
       <button
-        className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer text-lg leading-none"
+        className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full text-slate-600 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer text-lg leading-none"
         onClick={handleDismiss}
         title="닫기"
       >
         &times;
       </button>
       <CardContent className="pt-4 pb-4">
-        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+        <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-3">
           시작 가이드
         </div>
         {/* 단계별 진행 상황 표시: currentStep 기준으로 완료/현재/대기 상태 렌더링 */}

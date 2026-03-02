@@ -26,7 +26,7 @@ function Stepper({ steps, current = 0, className }) {
                   'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors',
                   isDone && 'bg-success text-white',
                   isActive && 'bg-primary-600 text-white ring-2 ring-primary-200',
-                  !isDone && !isActive && 'bg-slate-100 text-slate-400'
+                  !isDone && !isActive && 'bg-slate-100 text-slate-600'
                 )}
               >
                 {isDone ? (
@@ -39,10 +39,10 @@ function Stepper({ steps, current = 0, className }) {
               </div>
               <span
                 className={cn(
-                  'text-[10px] leading-tight text-center max-w-[60px]',
+                  'text-xs leading-tight text-center max-w-[60px]',
                   isDone && 'text-success-dark font-medium',
                   isActive && 'text-primary-700 font-semibold',
-                  !isDone && !isActive && 'text-slate-400'
+                  !isDone && !isActive && 'text-slate-600'
                 )}
                 dangerouslySetInnerHTML={{ __html: label }}
               />
