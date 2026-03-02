@@ -295,6 +295,19 @@ export default function WalletButton() {
 
   // ── Tron 미연결 ────────────────────────────────────────────────
   if (isTron) {
+    // 모바일 일반 브라우저: TronLink 딥링크 바로 실행
+    if (isMobile() && !isTronInstalled) {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => { window.location.href = getTronLinkDeepLink() }}
+        >
+          지갑 연결
+        </Button>
+      )
+    }
+    // TronLink 인앱 브라우저 또는 데스크톱
     return (
       <>
         <Button
@@ -316,19 +329,16 @@ export default function WalletButton() {
     )
   }
 
-  // ── EVM 미연결: 모바일 일반 브라우저 ───────────────────────────
+  // ── EVM 미연결: 모바일 일반 브라우저 → MetaMask 딥링크 바로 실행
   if (isMobile() && !isMetaMaskBrowser()) {
     return (
-      <>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowModal(true)}
-        >
-          지갑에서 열기
-        </Button>
-        {showModal && <EvmWalletModal onClose={() => setShowModal(false)} />}
-      </>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => { window.location.href = getMetaMaskDeepLink() }}
+      >
+        지갑 연결
+      </Button>
     )
   }
 
