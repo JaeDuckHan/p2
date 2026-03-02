@@ -338,23 +338,16 @@ export default function WalletButton() {
   }
 
   // ── EVM 미연결: 데스크톱 또는 인앱 브라우저 ────────────────────
+  // wagmi connect()를 먼저 시도 — window.ethereum 체크 없이 직접 연결
+  // wagmi injected 커넥터가 지갑을 자동 감지한다
   return (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={isConnecting}
-        onClick={() => {
-          if (window.ethereum) {
-            connect()
-          } else {
-            setShowModal(true)
-          }
-        }}
-      >
-        {isConnecting ? '연결 중…' : '지갑 연결'}
-      </Button>
-      {showModal && <EvmWalletModal onClose={() => setShowModal(false)} />}
-    </>
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={isConnecting}
+      onClick={() => connect()}
+    >
+      {isConnecting ? '연결 중…' : '지갑 연결'}
+    </Button>
   )
 }
