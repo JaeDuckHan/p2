@@ -1,13 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install)",
-      "Bash(npm install:*)",
       "Bash(npm:*)",
       "Bash(node:*)",
       "mcp__Claude_Preview__preview_start",
       "Bash(D:/node/node.exe node_modules/hardhat/internal/cli/bootstrap.js compile:*)",
-      "Bash(D:/Git/bin/git.exe log --oneline -10)"
+      "Bash(D:/Git/bin/git.exe log --oneline -10)",
+      "Bash(git --version)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(git status -u)",
+      "Bash(where git)",
+      "Bash(npx hardhat test 2>&1 | tail -30)",
+      "Bash(npx eslint src --max-warnings 1000 2>&1 | tail -20)",
+      "Bash(npx vite build 2>&1 | tail -30)",
+      "Bash(git clone --recurse-submodules https://github.com/sangrokjung/claude-forge.git)"
     ]
   }
 }

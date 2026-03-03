@@ -103,5 +103,65 @@
       "runtimeArgs": ["scripts/git-commit-phase5.js"],
       "port": 9989
     }
+    ,{
+      "name": "git-commit-multichain",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-commit-multichain.js"],
+      "port": 9877
+    }
+    ,{
+      "name": "git-verify",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-verify.js"],
+      "port": 9876
+    }
+    ,{
+      "name": "git-push-main",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-push-main.js"],
+      "port": 9875
+    }
+    ,{
+      "name": "vite-build",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/vite-build.js"],
+      "port": 9870
+    }
+    ,{
+      "name": "git-commit-phase6",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-commit-multichain-phase6.js"],
+      "port": 9869
+    }
+    ,{
+      "name": "deploy-polygon-amoy",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/deploy-polygon-amoy.js"],
+      "port": 9868
+    }
+    ,{
+      "name": "deploy-tron-nile",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/deploy-tron-nile.js"],
+      "port": 9867
+    }
+    ,{
+      "name": "git-commit-deploy-infra",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-commit-deploy-infra.js"],
+      "port": 9866
+    }
+    ,{
+      "name": "replace-text-colors",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/replace-text-colors.js"],
+      "port": 9865
+    }
+    ,{
+      "name": "git-commit-bugfix-ux",
+      "runtimeExecutable": "D:\\node\\node.exe",
+      "runtimeArgs": ["scripts/git-commit-bugfix-ux.js"],
+      "port": 9860
+    }
   ]
 }

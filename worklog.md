@@ -581,3 +581,40 @@ TRON_NETWORK=nile node scripts/deploy-tron.js
 - walletClient 미준비 시 캐시 유지한 채 조기 리턴 (불필요한 초기화 방지)
 - 의존성 배열: `[walletClient, address, isConnected, isTron]` → `[address, isConnected, isTron]`
 - 빌드 검증 통과 (vite build 성공, 0 errors)
+
+---
+
+## 6. 내 오더 탭에 "전체" 서브탭 추가 (2026-03-04)
+
+### 커밋
+| 커밋 | 설명 |
+|------|------|
+| `cd896a1` | fix: 내 오더 탭에 "전체" 서브탭 추가 — 판매+구매 오더를 한눈에 표시 |
+
+---
+
+## 7. 설정 파일 정리 — /simplify 코드 리뷰 (2026-03-04)
+
+### 작업 개요
+`/simplify` 스킬로 git diff 대상 파일을 3개 병렬 에이전트(코드 재사용, 코드 품질, 효율성)로 리뷰하고 이슈를 수정했다.
+
+### 리뷰 대상
+| 파일 | 변경 내용 |
+|------|----------|
+| `.claude/launch.json` | 9개 신규 launch configuration 추가 |
+| `.claude/settings.local.json` | ~40개 Bash 퍼미션 패턴 누적 |
+
+### 리뷰 결과
+
+**launch.json**: 이슈 없음 — 포트 충돌 없음, 스크립트 참조 정상, 복사-붙여넣기 오류 없음.
+
+**settings.local.json**: 주요 이슈 발견
+1. **중복 제거**: `npm install`, `npm install:*` → 이미 `npm:*`에 포함
+2. **일회성 디버깅 명령**: `echo`, `powershell -Command "Write-Host hello"`, `cmd /c echo hello` 등 제거
+3. **중복 경로 변형**: git clone 5개 변형, git status 6개 변형 (D:/, D:\\, /d/ 혼용) → 대표 1개만 유지
+4. **node.exe 인라인 원라이너 6개**: `node:*` 패턴에 이미 포함 → 제거
+5. **일회성 sed/xargs 배치 명령 5개**: `replace-text-colors.js` 스크립트로 대체됨 → 제거
+
+### 수정 결과
+- **settings.local.json**: 54줄 → 18줄 (67% 감소, 40개 → 14개 엔트리)
+- **launch.json**: 변경 없음 (포맷팅 불일치는 기능에 무관하므로 유지)
