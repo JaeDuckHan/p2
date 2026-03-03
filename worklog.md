@@ -485,3 +485,57 @@ TRON_NETWORK=nile node scripts/deploy-tron.js
 - [ ] 컨트랙트 소스코드 검증 (Polygonscan, Tronscan)
 - [ ] 실 기기 테스트 (모바일 Safari, Chrome)
 - [ ] 성능 최적화 (코드 스플리팅, 번들 크기 축소)
+
+---
+
+---
+
+# 수정 작업 제안서 작성 (2026-03-03)
+
+> 기반 문서: `코드_UI_점검보고서_2026-03-02.md`
+> 결과 문서: `수정_작업제안서_2026-03-03.md`
+
+---
+
+## 1. 작업 개요
+
+코드/UI 점검보고서(2026-03-02)의 지적사항을 소스코드와 직접 대조하여 검증하고, 이슈별 수정 작업 제안서를 작성했다.
+
+---
+
+## 2. 검증 결과
+
+| 이슈 | 보고서 내용 | 검증 결과 |
+|------|------------|----------|
+| P0-1 테스트 실패 | constructor 인자 불일치 (5개 vs 4개) | **확인됨** |
+| P0-2 ESLint 실패 | 설정 파일 누락 | **확인됨** |
+| P0-3 네트워크 에러 | error 상태 미표출 | **확인됨** |
+| P1-1 번들 크기 | 코드 스플리팅 없음 | **확인됨** |
+| P1-2 XSS 위험 | dangerouslySetInnerHTML | **확인됨** |
+| P1-3 탐색기 링크 | address 링크 사용 (tx hash 미노출) | **확인됨** |
+
+---
+
+## 3. 수정 작업 제안 요약
+
+### Phase 1 — P0 (릴리즈 차단)
+- **P0-1**: 테스트 deployFixture에 relayer 인자 추가 + 관련 테스트 케이스 보강
+- **P0-2**: ESLint 9 Flat Config 설정 + React 플러그인 설치 + lint 스크립트 업데이트
+- **P0-3**: App.jsx에서 networkError 수신 → useEffect + toast 연동 (방안 C 채택)
+
+### Phase 2 — P1 (다음 스프린트)
+- **P1-1**: 라우트 기반 lazy import + vite manualChunks + Suspense fallback
+- **P1-2**: stepper.jsx의 dangerouslySetInnerHTML → Fragment 기반 plain text 전환
+- **P1-3**: useEscrow에서 release/refund txHash 수집 → TradeRoom에서 tx 링크 우선 표시
+
+---
+
+## 4. 기존 커밋 (2026-03-03)
+
+| 커밋 | 설명 |
+|------|------|
+| `112b4e5` | fix: 네트워크 전환 버튼 작동 안 됨 — window.ethereum 직접 호출을 wagmi useSwitchChain으로 교체 |
+| `e9f927d` | fix: @eslint/js 버전을 9.x로 다운그레이드 — Vercel npm install 충돌 해결 |
+| `ca9f217` | fix: P0/P1 전체 수정 — 테스트 복구, ESLint 설정, 네트워크 에러 Toast, 코드 스플리팅, XSS 제거, tx 링크 |
+| `f1be10c` | fix: Dialog을 Portal로 렌더링 — backdrop-filter containing block 문제 해결 |
+| `265a4d8` | fix: 데스크톱 다이얼로그 중앙 정렬 + 지갑 연결 에러 근본 수정 |
