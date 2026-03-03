@@ -6,7 +6,7 @@
 // NOTE: XMTP is EVM-only. Tron 네트워크에서는 초기화를 스킵하고
 //       isReady=false, isTronSkipped=true 를 노출하여 UI에서 안내한다.
 
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { useWalletClient, useAccount } from 'wagmi'
 import { getOrCreateClient, resetClient } from '../lib/xmtp-client'
 import { useNetwork } from './NetworkContext'
@@ -26,6 +26,11 @@ export function XmtpProvider({ children }) {
   const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState(null)
 
+  // walletClient 참조 안정화 — wagmi가 매 렌더링마다 새 객체를 반환하므로
+  // deps에서 제외하고 ref로 접근하여 불필요한 signMessage 재호출 방지
+  const walletClientRef = useRef(walletClient)
+  walletClientRef.current = walletClient
+
   useEffect(() => {
     // Tron 네트워크: XMTP는 EVM 전용이므로 초기화 스킵
     if (isTron) {
@@ -36,7 +41,7 @@ export function XmtpProvider({ children }) {
       return
     }
 
-    if (!isConnected || !walletClient) {
+    if (!isConnected) {
       setClient(null)
       setIsReady(false)
       setError(null)
@@ -44,9 +49,13 @@ export function XmtpProvider({ children }) {
       return
     }
 
+    // walletClient가 아직 준비되지 않은 경우 대기 (캐시 초기화하지 않음)
+    const wc = walletClientRef.current
+    if (!wc) return
+
     let cancelled = false
 
-    getOrCreateClient(walletClient)
+    getOrCreateClient(wc)
       .then((c) => {
         if (!cancelled) {
           setClient(c)
@@ -65,7 +74,7 @@ export function XmtpProvider({ children }) {
     return () => {
       cancelled = true
     }
-  }, [walletClient, address, isConnected, isTron])
+  }, [address, isConnected, isTron])
 
   return (
     <XmtpContext.Provider value={{ client, isReady, error, isTronSkipped: isTron }}>

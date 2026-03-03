@@ -539,3 +539,44 @@ TRON_NETWORK=nile node scripts/deploy-tron.js
 | `ca9f217` | fix: P0/P1 전체 수정 — 테스트 복구, ESLint 설정, 네트워크 에러 Toast, 코드 스플리팅, XSS 제거, tx 링크 |
 | `f1be10c` | fix: Dialog을 Portal로 렌더링 — backdrop-filter containing block 문제 해결 |
 | `265a4d8` | fix: 데스크톱 다이얼로그 중앙 정렬 + 지갑 연결 에러 근본 수정 |
+
+---
+
+## 5. 버그 분석: 페이지 전환 시 지갑 컨펌 반복 요청
+
+### 증상
+지갑 한번 연결 후 다른 페이지로 이동할 때마다 지갑 서명 승인 팝업이 뜸. 송금 시에만 컨펌을 받아야 정상.
+
+### 근본 원인
+`src/contexts/XmtpContext.jsx:68` — useEffect 의존성 배열에 `walletClient` 포함
+
+```
+[walletClient, address, isConnected, isTron]
+```
+
+- wagmi `useWalletClient()`는 매 렌더링마다 새로운 객체 참조 반환 (내용은 동일)
+- 페이지 전환 → 리렌더링 → walletClient 참조 변경 → useEffect 재실행
+- `getOrCreateClient(walletClient)` → `Client.create()` → `signMessage()` 호출
+- 지갑 컨펌 팝업 발생
+
+### 수정 방안
+의존성 배열에서 `walletClient` 제거:
+
+```js
+// 변경 전
+}, [walletClient, address, isConnected, isTron])
+
+// 변경 후
+}, [address, isConnected, isTron])
+```
+
+`address`, `isConnected`만으로 실제 지갑 상태 변경 감지 가능. `getOrCreateClient()` 내부에서 address 기반 캐시 체크를 하므로 안전.
+
+### 상태: ✅ 수정 완료
+
+#### 수정 내용
+- `walletClient`를 `useRef`로 추적하여 deps에서 제거
+- `!isConnected`와 `!walletClient` 분리 — 연결 해제 시에만 `resetClient()` 호출
+- walletClient 미준비 시 캐시 유지한 채 조기 리턴 (불필요한 초기화 방지)
+- 의존성 배열: `[walletClient, address, isConnected, isTron]` → `[address, isConnected, isTron]`
+- 빌드 검증 통과 (vite build 성공, 0 errors)
