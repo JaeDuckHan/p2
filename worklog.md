@@ -539,6 +539,7 @@ TRON_NETWORK=nile node scripts/deploy-tron.js
 | `ca9f217` | fix: P0/P1 전체 수정 — 테스트 복구, ESLint 설정, 네트워크 에러 Toast, 코드 스플리팅, XSS 제거, tx 링크 |
 | `f1be10c` | fix: Dialog을 Portal로 렌더링 — backdrop-filter containing block 문제 해결 |
 | `265a4d8` | fix: 데스크톱 다이얼로그 중앙 정렬 + 지갑 연결 에러 근본 수정 |
+| `7283c51` | fix: 페이지 전환 시 지갑 컨펌 반복 요청 — walletClient 참조를 useRef로 안정화 |
 
 ---
 
