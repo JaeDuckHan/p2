@@ -43,8 +43,8 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
   const { address } = useAccount()
   const { toast } = useToast()
 
-  // 현재 선택된 탭: 'sell' (판매 오더) | 'buy' (구매 오더)
-  const [tab, setTab] = useState('sell')
+  // 현재 선택된 탭: 'all' (전체, 내 오더 전용) | 'sell' (판매 오더) | 'buy' (구매 오더)
+  const [tab, setTab] = useState(myOrdersOnly ? 'all' : 'sell')
   // 오더 생성 폼 표시 모드: null | 'sell-form' | 'buy-form'
   const [formMode, setFormMode] = useState(null)
   // 수정 중인 오더 객체 (수정 모드일 때만 설정)
@@ -63,9 +63,11 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
   // 현재 탭에 맞는 오더 목록.
   // myOrdersOnly 모드이면 내 것만 필터링, 아니면 전체 목록 사용
   const orders = myOrdersOnly
-    ? (tab === 'sell'
-        ? orderbook.sellOrders.filter(o => o.seller?.toLowerCase() === address?.toLowerCase())
-        : orderbook.buyOrders.filter(o => o.buyer?.toLowerCase() === address?.toLowerCase()))
+    ? (tab === 'all'
+        ? allMyOrders
+        : tab === 'sell'
+          ? orderbook.sellOrders.filter(o => o.seller?.toLowerCase() === address?.toLowerCase())
+          : orderbook.buyOrders.filter(o => o.buyer?.toLowerCase() === address?.toLowerCase()))
     : (tab === 'sell' ? orderbook.sellOrders : orderbook.buyOrders)
 
   // 내 판매 오더에 들어온 수락 요청 목록 (알림 배너 표시 및 구매자 선택에 사용)
@@ -419,14 +421,17 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
       {/* 판매/구매 탭 전환 */}
       <Tabs value={tab} onChange={setTab}>
         <TabsList className="w-full px-4">
-          <TabsTrigger value="sell">📤 판매 오더</TabsTrigger>
-          <TabsTrigger value="buy">📥 구매 오더</TabsTrigger>
+          {myOrdersOnly && <TabsTrigger value="all">📋 전체</TabsTrigger>}
+          <TabsTrigger value="sell">📤 판매</TabsTrigger>
+          <TabsTrigger value="buy">📥 구매</TabsTrigger>
         </TabsList>
       </Tabs>
 
       {/* 탭 설명 텍스트 */}
       <div className="px-4 py-2 text-xs text-slate-700">
-        {tab === 'sell' ? (
+        {tab === 'all' ? (
+          <>📋 <strong className="text-primary-600">내 오더 전체</strong> — 판매 + 구매 오더를 한눈에</>
+        ) : tab === 'sell' ? (
           <>🛡️ <strong className="text-amber-600">판매 오더</strong> — 에스크로 보호 하에 USDT 구매 가능</>
         ) : (
           <>🛡️ <strong className="text-blue-600">구매 오더</strong> — 에스크로 보호 하에 USDT 판매 가능</>
@@ -463,7 +468,8 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
       {/* 현재 탭의 오더 건수 표시 */}
       <div className="px-4 mb-2">
         <div className="text-xs text-slate-700">
-          {tab === 'sell' ? '📤' : '📥'} {tab === 'sell' ? '판매' : '구매'} 오더 · {orders.length}건
+          {tab === 'all' ? '📋' : tab === 'sell' ? '📤' : '📥'}{' '}
+          {tab === 'all' ? '전체' : tab === 'sell' ? '판매' : '구매'} 오더 · {orders.length}건
         </div>
       </div>
 
@@ -472,10 +478,10 @@ export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = 
         // 오더가 없을 때 빈 상태 UI
         <div className="flex flex-col items-center justify-center py-12 text-center px-4">
           <div className="text-4xl mb-2">
-            {tab === 'sell' ? '📤' : '📥'}
+            {tab === 'all' ? '📋' : tab === 'sell' ? '📤' : '📥'}
           </div>
           <div className="text-base font-semibold text-slate-700 mb-1">
-            아직 등록된 {tab === 'sell' ? '판매' : '구매'} 오더가 없습니다
+            아직 등록된 {tab === 'all' ? '' : tab === 'sell' ? '판매 ' : '구매 '}오더가 없습니다
           </div>
           <div className="text-sm text-slate-600 mb-4">
             첫 번째 거래자가 되어보세요.<br/>
