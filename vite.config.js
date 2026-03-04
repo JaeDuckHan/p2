@@ -19,6 +19,7 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom'],
           wagmi: ['wagmi', 'viem'],
+          walletconnect: ['@walletconnect/ethereum-provider'],
           xmtp: ['@xmtp/browser-sdk'],
         },
       },

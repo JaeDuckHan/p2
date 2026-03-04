@@ -46,6 +46,9 @@ export function WalletProvider({ children }) {
 
     // Tron 전용
     isTronInstalled: tron.isInstalled,
+
+    // WalletConnect 사용 가능 여부 (EVM 전용)
+    hasWalletConnect: evm.hasWalletConnect,
   }), [active, evm, tron, isEvm, isTron])
 
   return (

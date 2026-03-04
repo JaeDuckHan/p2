@@ -253,7 +253,7 @@ function TronWalletModal({ onClose }) {
 
 // ── 메인 WalletButton ───────────────────────────────────────────────────────
 export default function WalletButton() {
-  const { address, isConnected, isConnecting, connect, disconnect, chain, isTronInstalled, connectError, resetError } = useWallet()
+  const { address, isConnected, isConnecting, connect, disconnect, chain, isTronInstalled, connectError, resetError, hasWalletConnect } = useWallet()
   const { isEvm, isTron } = useNetwork()
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
@@ -336,8 +336,8 @@ export default function WalletButton() {
     )
   }
 
-  // ── EVM 미연결: 모바일 일반 브라우저 → MetaMask 딥링크 바로 실행
-  if (isMobile() && !isMetaMaskBrowser()) {
+  // ── EVM 미연결: 모바일 일반 브라우저 + WalletConnect 미설정 → MetaMask 딥링크 폴백
+  if (isMobile() && !isMetaMaskBrowser() && !hasWalletConnect) {
     return (
       <Button
         variant="outline"
@@ -349,7 +349,7 @@ export default function WalletButton() {
     )
   }
 
-  // ── EVM 미연결: 데스크톱 또는 인앱 브라우저 ────────────────────
+  // ── EVM 미연결: 데스크톱 / 인앱 브라우저 / 모바일+WalletConnect ─
   return (
     <>
       <Button
@@ -357,7 +357,7 @@ export default function WalletButton() {
         size="sm"
         disabled={isConnecting}
         onClick={() => {
-          if (resetError) resetError()
+          resetError()
           connect()
         }}
       >
