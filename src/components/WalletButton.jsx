@@ -280,7 +280,7 @@ export default function WalletButton() {
   // ── 연결된 상태 ────────────────────────────────────────────────
   if (isConnected) {
     return (
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1 min-w-0 max-w-[160px]">
         {isTron && (
           <Badge variant="default" className="text-xs px-1.5 py-0.5 bg-red-600 shrink-0">
             Tron
@@ -289,12 +289,12 @@ export default function WalletButton() {
         <Button
           variant="outline"
           size="sm"
-          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 max-w-[130px] truncate"
+          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 min-w-0 truncate"
           onClick={() => disconnect()}
           title={address}
         >
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-          {shortAddr(address)}
+          <span className="truncate">{shortAddr(address)}</span>
         </Button>
       </div>
     )

@@ -29,7 +29,7 @@ export default function AppShell({
   const { network } = useNetwork()
 
   return (
-    <div className="max-w-[520px] mx-auto min-h-screen bg-white relative shadow-xl">
+    <div className="max-w-[520px] mx-auto min-h-screen bg-white relative shadow-xl overflow-x-hidden">
 
       {/* ── 헤더 ─────────────────────────────────────────────────────── */}
       {showHeader && (
