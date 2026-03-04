@@ -12,7 +12,7 @@
  *   4. 기본 → 메인 오더 목록
  */
 import { useState, useEffect, useRef } from 'react'
-import { useAccount } from 'wagmi'
+import { useWallet } from '@/contexts/WalletContext'
 import SellOrderForm from './SellOrderForm'
 import BuyOrderForm from './BuyOrderForm'
 import OrderDetail from './OrderDetail'
@@ -40,7 +40,7 @@ export { getAvatarGradient, getAvatarChar } from '@/lib/avatar'
  */
 export default function OrderbookView({ orderbook, onStartTrade, myOrdersOnly = false }) {
   // 현재 연결된 지갑 주소
-  const { address } = useAccount()
+  const { address } = useWallet()
   const { toast } = useToast()
 
   // 현재 선택된 탭: 'all' (전체, 내 오더 전용) | 'sell' (판매 오더) | 'buy' (구매 오더)
