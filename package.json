@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.51.0",
+    "@walletconnect/modal": "^2.7.0",
     "@xmtp/browser-sdk": "^6.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
