@@ -299,6 +299,12 @@ export default function WalletButton() {
     // 사용자가 직접 취소한 경우 → 무시
     if (name === 'UserRejectedRequestError' || msg.includes('User rejected')) return
 
+    // 이미 연결 요청이 대기 중 → 안내 토스트 (에러가 아닌 정보 메시지)
+    if (msg.includes('already pending')) {
+      toast('지갑 앱에서 이미 연결 요청이 대기 중입니다. 지갑 앱을 확인해주세요.', 'info')
+      return
+    }
+
     // 지갑(provider)을 찾을 수 없음 → 설치 모달
     const msgLower = msg.toLowerCase()
     if (name === 'ConnectorNotFoundError' || msgLower.includes('provider not found') || msgLower.includes('connector not found')) {
