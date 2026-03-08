@@ -300,7 +300,8 @@ export default function WalletButton() {
     if (name === 'UserRejectedRequestError' || msg.includes('User rejected')) return
 
     // 지갑(provider)을 찾을 수 없음 → 설치 모달
-    if (name === 'ConnectorNotFoundError' || msg.includes('provider') || msg.includes('Connector not found')) {
+    const msgLower = msg.toLowerCase()
+    if (name === 'ConnectorNotFoundError' || msgLower.includes('provider not found') || msgLower.includes('connector not found')) {
       setShowModal(true)
       return
     }
