@@ -42,6 +42,12 @@ function isMetaMaskBrowser() {
   return typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask
 }
 
+/** 인앱 브라우저(Viber, LINE, KakaoTalk 등) 감지 */
+function isInAppBrowser() {
+  const ua = navigator.userAgent || ''
+  return /FBAN|FBAV|Instagram|Line\/|KAKAOTALK|Viber|Snapchat|Twitter/i.test(ua)
+}
+
 /** MetaMask 딥링크 생성 */
 function getMetaMaskDeepLink() {
   const dappUrl = window.location.href.replace(/^https?:\/\//, '')
@@ -63,6 +69,7 @@ function getTronLinkDeepLink() {
 // ── EVM 지갑 미설치 안내 모달 ──────────────────────────────────────────────
 function EvmWalletModal({ onClose }) {
   const mobile = isMobile()
+  const inApp = isInAppBrowser()
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -77,6 +84,31 @@ function EvmWalletModal({ onClose }) {
 
         {mobile ? (
           <>
+            {inApp && (
+              <Card className="mb-4 border-amber-200 bg-amber-50">
+                <CardContent className="pt-4">
+                  <div className="text-sm font-semibold text-amber-800 mb-2">
+                    앱 내 브라우저에서는 지갑 연결이 제한됩니다
+                  </div>
+                  <div className="text-sm text-amber-700">
+                    Safari 또는 Chrome에서 이 링크를 열어주세요.
+                    아래 <strong>주소 복사</strong> 버튼을 눌러 브라우저에 붙여넣기 하세요.
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 w-full border-amber-300 text-amber-800"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href)
+                        .then(() => onClose())
+                        .catch(() => {})
+                    }}
+                  >
+                    주소 복사하기
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
             <Card className="mb-4">
               <CardContent className="pt-4">
                 <div className="text-sm font-semibold text-slate-800 mb-3">모바일 설치 방법</div>
@@ -273,9 +305,16 @@ export default function WalletButton() {
       return
     }
 
-    // 기타 에러 → 토스트
-    toast('지갑 연결에 실패했습니다. 페이지를 새로고침 후 다시 시도해 주세요.', 'error')
-  }, [connectError, toast])
+    // 모바일에서 WalletConnect 실패 → 설치/딥링크 모달 표시
+    if (isMobile() && !isMetaMaskBrowser() && isEvm) {
+      setShowModal(true)
+      return
+    }
+
+    // 기타 에러 → 토스트 (에러 상세 포함)
+    const detail = msg.length > 80 ? msg.slice(0, 80) + '…' : msg
+    toast(`지갑 연결에 실패했습니다. ${detail || '페이지를 새로고침 후 다시 시도해 주세요.'}`, 'error')
+  }, [connectError, toast, isEvm])
 
   // ── 연결된 상태 ────────────────────────────────────────────────
   if (isConnected) {
@@ -336,16 +375,26 @@ export default function WalletButton() {
     )
   }
 
-  // ── EVM 미연결: 모바일 일반 브라우저 + WalletConnect 미설정 → MetaMask 딥링크 폴백
-  if (isMobile() && !isMetaMaskBrowser() && !hasWalletConnect) {
+  // ── EVM 미연결: 모바일 일반 브라우저 + (WalletConnect 미설정 또는 인앱 브라우저) → MetaMask 딥링크 폴백
+  if (isMobile() && !isMetaMaskBrowser() && (!hasWalletConnect || isInAppBrowser())) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => { window.location.href = getMetaMaskDeepLink() }}
-      >
-        지갑 연결
-      </Button>
+      <>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            if (isInAppBrowser()) {
+              // 인앱 브라우저: WC 대신 모달로 안내
+              setShowModal(true)
+            } else {
+              window.location.href = getMetaMaskDeepLink()
+            }
+          }}
+        >
+          지갑 연결
+        </Button>
+        {showModal && <EvmWalletModal onClose={() => setShowModal(false)} />}
+      </>
     )
   }
 
