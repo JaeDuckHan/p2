@@ -32,9 +32,11 @@ function shortAddr(addr) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
-/** 모바일 환경인지 감지 */
+/** 모바일 환경인지 감지 — 인앱 브라우저가 데스크톱 UA를 쓰는 경우도 커버 */
 function isMobile() {
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) return true
+  // 일부 인앱 브라우저(Viber 등)가 데스크톱 UA를 사용하므로 터치+화면 크기로 보완
+  return navigator.maxTouchPoints > 0 && window.innerWidth < 768
 }
 
 /** MetaMask 인앱 브라우저인지 감지 */
